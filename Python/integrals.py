@@ -16,7 +16,7 @@
 """
 
 import numpy as np
-import scipy.misc as misc
+import scipy.special as special
 import scipy.special as spec
 import scipy.integrate as quad
 
@@ -78,7 +78,7 @@ def norm(ax,ay,az,aa):
     # Compute normalization coefficient
     N = (2*aa/np.pi)**(3./4.)
     N *= (4*aa)**((ax+ay+az)/2)
-    N /= np.sqrt( misc.factorial2(2*ax-1) * misc.factorial2(2*ay-1) * misc.factorial2(2*az-1) )
+    N /= np.sqrt( special.factorial2(2*ax-1) * special.factorial2(2*ay-1) * special.factorial2(2*az-1) )
 
     return N
 
@@ -109,9 +109,9 @@ def Sxyz(a,b,aa,bb,Ra,Rb,R):
     for i in range(a+1):
         for j in range(b+1):
             if (i+j) % 2 == 0:
-                tmp = misc.comb(a,i,exact=True)
-                tmp *= misc.comb(b,j,exact=True)
-                tmp *= misc.factorial2(i + j - 1,exact=True)
+                tmp = special.comb(a,i,exact=True)
+                tmp *= special.comb(b,j,exact=True)
+                tmp *= special.factorial2(i + j - 1,exact=True)
                 tmp /= (2.*(aa+bb))**((i+j)/2.)
                 tmp *= (R-Ra)**(a-i)
                 tmp *= (R-Rb)**(b-j)
@@ -339,12 +339,12 @@ def nuclear(ax,ay,az,bx,by,bz,aa,bb,Ra,Rb,Rn,Zn):
         A *= (-1)**(l)
         A *= f(l,l1,l2,Rp-Ra,Rp-Rb)
         A *= (-1)**i
-        A *= misc.factorial(l,exact=True)
+        A *= special.factorial(l,exact=True)
         A *= (Rp-Rc)**(l-2*r-2*i)
         A *= eps**(r+i)
-        A /= misc.factorial(r,exact=True)
-        A /= misc.factorial(i,exact=True)
-        A /= misc.factorial(l-2*r-2*i,exact=True)
+        A /= special.factorial(r,exact=True)
+        A /= special.factorial(i,exact=True)
+        A /= special.factorial(l-2*r-2*i,exact=True)
 
         return A
 
@@ -435,9 +435,9 @@ def electronic(ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz,aa,bb,cc,dd,Ra,Rb,Rc,Rd):
 
         t = 1
         t *= f(l,l1,l2,a,b)
-        t *= misc.factorial(l,exact=True)
+        t *= special.factorial(l,exact=True)
         t *= g**(r-l)
-        t /= misc.factorial(r,exact=True) * misc.factorial(l-2*r,exact=True)
+        t /= special.factorial(r,exact=True) * special.factorial(l-2*r,exact=True)
 
         return t
 
@@ -457,12 +457,12 @@ def electronic(ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz,aa,bb,cc,dd,Ra,Rb,Rc,Rd):
         b *= (-1)**(l) * theta(l,l1,l2,Rp-Ra,Rp-Rb,r,g1)
         b *= theta(ll,l3,l4,Rq-Rc,Rq-Rd,rr,g2)
         b *= (-1)**i * (2*delta)**(2*(r+rr))
-        b *= misc.factorial(l + ll - 2*r - 2*rr,exact=True)
+        b *= special.factorial(l + ll - 2*r - 2*rr,exact=True)
         b *= delta**i * (Rp-Rq)**(l+ll-2*(r+rr+i))
 
         tmp = 1
-        tmp *= (4*delta)**(l+ll) * misc.factorial(i,exact=True)
-        tmp *= misc.factorial(l+ll-2*(r+rr+i),exact=True)
+        tmp *= (4*delta)**(l+ll) * special.factorial(i,exact=True)
+        tmp *= special.factorial(l+ll-2*(r+rr+i),exact=True)
 
         b /= tmp
 
