@@ -20,6 +20,11 @@ import scipy.special as special
 import scipy.special as spec
 import scipy.integrate as quad
 
+
+import mpmath
+
+mpmath.mp.dps = 50
+
 from basis import *
 
 def gaussian_product(aa,bb,Ra,Rb):
@@ -52,7 +57,8 @@ def gaussian_product(aa,bb,Ra,Rb):
     # Compute Gaussian product coefficient
     c = np.dot(Ra-Rb,Ra-Rb)
     c *= - aa*bb / (aa + bb)
-    c = np.exp(c)
+    exp = np.vectorize(mpmath.exp)
+    c = exp(c)
 
     return R,c
 

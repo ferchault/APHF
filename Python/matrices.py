@@ -18,7 +18,10 @@
 from basis import *
 from integrals import *
 
-import numpy.linalg as la
+import mpmath
+
+mpmath.mp.dps = 50
+
 
 def S_overlap(basis):
     """
@@ -36,21 +39,33 @@ def S_overlap(basis):
     # List of basis functions
     B = basis.basis()
 
-    S = np.zeros((K,K))
+    S = mpmath.matrix(K, K)
 
-    for i,b1 in enumerate(B):
-        for j,b2 in enumerate(B):
-            for a1,d1 in zip(b1["a"],b1["d"]):
-                for a2,d2 in zip(b2["a"],b2["d"]):
+    for i, b1 in enumerate(B):
+        for j, b2 in enumerate(B):
+            for a1, d1 in zip(b1["a"], b1["d"]):
+                for a2, d2 in zip(b2["a"], b2["d"]):
                     R1 = b1["R"]
                     R2 = b2["R"]
 
-                    tmp = d1.conjugate()*d2
-                    tmp *= overlap(b1["lx"],b1["ly"],b1["lz"],b2["lx"],b2["ly"],b2["lz"],a1,a2,R1,R2)
+                    tmp = d1.conjugate() * d2
+                    tmp *= overlap(
+                        b1["lx"],
+                        b1["ly"],
+                        b1["lz"],
+                        b2["lx"],
+                        b2["ly"],
+                        b2["lz"],
+                        a1,
+                        a2,
+                        R1,
+                        R2,
+                    )
 
-                    S[i,j] +=  tmp
+                    S[i, j] += tmp
 
     return S
+
 
 def X_transform(S):
     """
@@ -68,13 +83,14 @@ def X_transform(S):
         1989
     """
 
-    s, U = la.eig(S)
+    s, U = mpmath.eig(S)
 
-    s = np.diag(s**(-1./2.))
+    s = np.diag([mpmath.power(_, (-1.0 / 2.0)) for _ in s])
 
-    X = np.dot(U,s)
+    X = np.dot(U, s)
 
     return X
+
 
 def T_kinetic(basis):
     """
@@ -91,23 +107,35 @@ def T_kinetic(basis):
     # List of basis functions
     B = basis.basis()
 
-    T = np.zeros((K,K))
+    T = np.zeros((K, K))
 
-    for i,b1 in enumerate(B):
-        for j,b2 in enumerate(B):
-            for a1,d1 in zip(b1["a"],b1["d"]):
-                for a2,d2 in zip(b2["a"],b2["d"]):
+    for i, b1 in enumerate(B):
+        for j, b2 in enumerate(B):
+            for a1, d1 in zip(b1["a"], b1["d"]):
+                for a2, d2 in zip(b2["a"], b2["d"]):
                     R1 = b1["R"]
                     R2 = b2["R"]
 
-                    tmp = d1.conjugate()*d2
-                    tmp *= kinetic(b1["lx"],b1["ly"],b1["lz"],b2["lx"],b2["ly"],b2["lz"],a1,a2,R1,R2)
+                    tmp = d1.conjugate() * d2
+                    tmp *= kinetic(
+                        b1["lx"],
+                        b1["ly"],
+                        b1["lz"],
+                        b2["lx"],
+                        b2["ly"],
+                        b2["lz"],
+                        a1,
+                        a2,
+                        R1,
+                        R2,
+                    )
 
-                    T[i,j] +=  tmp
+                    T[i, j] += tmp
 
     return T
 
-def V_nuclear(basis,atom):
+
+def V_nuclear(basis, atom):
     """
     Compute nuclear-electron potential energy matrix Vn.
 
@@ -129,24 +157,37 @@ def V_nuclear(basis,atom):
     # Nuclear charge
     Zn = atom.Z
 
+    Vn = np.zeros((K, K))
 
-    Vn = np.zeros((K,K))
-
-    for i,b1 in enumerate(B):
-        for j,b2 in enumerate(B):
-            for a1,d1 in zip(b1["a"],b1["d"]):
-                for a2,d2 in zip(b2["a"],b2["d"]):
+    for i, b1 in enumerate(B):
+        for j, b2 in enumerate(B):
+            for a1, d1 in zip(b1["a"], b1["d"]):
+                for a2, d2 in zip(b2["a"], b2["d"]):
                     R1 = b1["R"]
                     R2 = b2["R"]
 
-                    tmp = d1.conjugate()*d2
-                    tmp *= nuclear(b1["lx"],b1["ly"],b1["lz"],b2["lx"],b2["ly"],b2["lz"],a1,a2,R1,R2,Rn,Zn)
+                    tmp = d1.conjugate() * d2
+                    tmp *= nuclear(
+                        b1["lx"],
+                        b1["ly"],
+                        b1["lz"],
+                        b2["lx"],
+                        b2["ly"],
+                        b2["lz"],
+                        a1,
+                        a2,
+                        R1,
+                        R2,
+                        Rn,
+                        Zn,
+                    )
 
-                    Vn[i,j] +=  tmp
+                    Vn[i, j] += tmp
 
     return Vn
 
-def H_core(basis,molecule):
+
+def H_core(basis, molecule):
     """
     Compute core Hamiltonian (sum of T and all the VN)
 
@@ -164,12 +205,12 @@ def H_core(basis,molecule):
     # Size of the basis set
     K = basis.K
 
-    Vn = np.zeros((K,K))
+    Vn = np.zeros((K, K))
 
-    Vnn  = np.zeros((K,K))
+    Vnn = np.zeros((K, K))
 
     for atom in molecule:
-        Vnn = V_nuclear(basis,atom)
+        Vnn = V_nuclear(basis, atom)
 
         print("Nuclear attraction Vn")
         print(Vnn)
@@ -181,7 +222,8 @@ def H_core(basis,molecule):
 
     return T + Vn
 
-def P_density(C,N):
+
+def P_density(C, N):
     """
     Compute dansity matrix.
 
@@ -201,16 +243,17 @@ def P_density(C,N):
     # Size of the basis set
     K = C.shape[0]
 
-    P = np.zeros((K,K))
+    P = np.zeros((K, K))
 
     for i in range(K):
         for j in range(K):
-            for k in range(int(N/2)): #TODO Only for RHF
-                P[i,j] += 2 * C[i,k] * C[j,k].conjugate()
+            for k in range(int(N / 2)):  # TODO Only for RHF
+                P[i, j] += 2 * C[i, k] * C[j, k].conjugate()
 
     return P
 
-def G_ee(basis,molecule,P,ee):
+
+def G_ee(basis, molecule, P, ee):
     """
     Compute core Hamiltonian matrix.
 
@@ -226,15 +269,16 @@ def G_ee(basis,molecule,P,ee):
     # Size of the basis set
     K = basis.K
 
-    G = np.zeros((K,K))
+    G = np.zeros((K, K))
 
     for i in range(K):
         for j in range(K):
             for k in range(K):
                 for l in range(K):
-                    G[i,j] += P[k,l] * (ee[i,j,k,l]  - 0.5 * ee[i,l,k,j])
+                    G[i, j] += P[k, l] * (ee[i, j, k, l] - 0.5 * ee[i, l, k, j])
 
     return G
+
 
 if __name__ == "__main__":
 
@@ -272,7 +316,7 @@ if __name__ == "__main__":
     """
 
     # H2
-    H2 = [Atom("H",(0,0,0),1,["1s"]),Atom("H",(0,0,1.4),1,["1s"])]
+    H2 = [Atom("H", (0, 0, 0), 1, ["1s"]), Atom("H", (0, 0, 1.4), 1, ["1s"])]
 
     # Create the basis set
     sto3g_H2 = STO3G(H2)
@@ -280,9 +324,9 @@ if __name__ == "__main__":
     # Compute matrices
     S_H2 = S_overlap(sto3g_H2)
     T_H2 = T_kinetic(sto3g_H2)
-    Vn1_H2 = V_nuclear(sto3g_H2,H2[0])
-    Vn2_H2 = V_nuclear(sto3g_H2,H2[1])
-    H_core_H2 = H_core(sto3g_H2,H2)
+    Vn1_H2 = V_nuclear(sto3g_H2, H2[0])
+    Vn2_H2 = V_nuclear(sto3g_H2, H2[1])
+    H_core_H2 = H_core(sto3g_H2, H2)
 
     print("###########")
     print("H2 molecule")
@@ -304,7 +348,7 @@ if __name__ == "__main__":
     print(H_core_H2)
 
     # HeH+
-    HeH = [Atom("H",(0,0,0),1,["1s"]),Atom("He",(0,0,1.4632),2,["1s"])]
+    HeH = [Atom("H", (0, 0, 0), 1, ["1s"]), Atom("He", (0, 0, 1.4632), 2, ["1s"])]
 
     # Create the basis set
     sto3g_HeH = STO3G(HeH)
@@ -312,9 +356,9 @@ if __name__ == "__main__":
     # Compute matrices
     S_HeH = S_overlap(sto3g_HeH)
     T_HeH = T_kinetic(sto3g_HeH)
-    Vn1_HeH = V_nuclear(sto3g_HeH,HeH[0])
-    Vn2_HeH = V_nuclear(sto3g_HeH,HeH[1])
-    H_core_HeH = H_core(sto3g_HeH,HeH)
+    Vn1_HeH = V_nuclear(sto3g_HeH, HeH[0])
+    Vn2_HeH = V_nuclear(sto3g_HeH, HeH[1])
+    H_core_HeH = H_core(sto3g_HeH, HeH)
 
     print("\n\n\n")
     print("############")
@@ -337,22 +381,24 @@ if __name__ == "__main__":
     print(H_core_HeH)
 
     # H2O
-    H2O = [   Atom("H",(0,+1.43233673,-0.96104039),1,["1s"]),
-                Atom("H",(0,-1.43233673,-0.96104039),1,["1s"]),
-                Atom("O",(0,0,0.24026010),8,["1s","2s","2p"])]
+    H2O = [
+        Atom("H", (0, +1.43233673, -0.96104039), 1, ["1s"]),
+        Atom("H", (0, -1.43233673, -0.96104039), 1, ["1s"]),
+        Atom("O", (0, 0, 0.24026010), 8, ["1s", "2s", "2p"]),
+    ]
 
     sto3g_H2O = STO3G(H2O)
 
     # Overlap matrix
     S_H2O = S_overlap(sto3g_H2O)
     T_H2O = T_kinetic(sto3g_H2O)
-    Vn1_H2O = V_nuclear(sto3g_H2O,H2O[0])
-    Vn2_H2O = V_nuclear(sto3g_H2O,H2O[1])
-    Vn3_H2O = V_nuclear(sto3g_H2O,H2O[2])
+    Vn1_H2O = V_nuclear(sto3g_H2O, H2O[0])
+    Vn2_H2O = V_nuclear(sto3g_H2O, H2O[1])
+    Vn3_H2O = V_nuclear(sto3g_H2O, H2O[2])
 
     Vn_H2O = Vn1_H2O + Vn2_H2O + Vn3_H2O
 
-    H_core_H2O = H_core(sto3g_H2O,H2O)
+    H_core_H2O = H_core(sto3g_H2O, H2O)
 
     print("\n\n\n")
     print("############")
