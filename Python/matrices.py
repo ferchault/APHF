@@ -87,7 +87,8 @@ def X_transform(S):
 
     s = np.diag([mpmath.power(_, (-1.0 / 2.0)) for _ in s])
 
-    X = np.dot(U, s)
+    # X = np.dot(U, s)
+    X = U * mpmath.matrix(s)
 
     return X
 

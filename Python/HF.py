@@ -29,8 +29,8 @@ from molecules import *
 ###########################
 ###########################
 
-mol = H2O  # Molecule
-bs = sto3g_H2O  # Basis set
+mol = H2  # Molecule
+bs = sto3g_H2  # Basis set
 N = 10  # Number of electrons
 
 maxiter = 100  # Maximal number of iteration
@@ -46,7 +46,6 @@ K = bs.K
 
 print("Computing overlap matrix S...")
 S = S_overlap(bs)
-print(S)
 
 if verbose:
     print(S)
