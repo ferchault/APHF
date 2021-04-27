@@ -45,7 +45,7 @@ def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
         print("\nG matrix:")
         print(G)
 
-    F = H + G  # Compute Fock matrix
+    F = np.array(H + G)  # Compute Fock matrix
 
     if verbose:
         print("\nFock matrix:")

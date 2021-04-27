@@ -704,7 +704,7 @@ def EE_list(basis):
     # List of basis functions
     B = basis.basis()
 
-    EE = np.zeros((K, K, K, K))
+    EE = mpmath.matrix(K, K, K, K)
 
     Nee = 0
 
@@ -787,7 +787,7 @@ def EE_list(basis):
     return EE
 
 
-def print_EE_list(ee):
+def print_EE_list(basis, ee):
     """
     Print list of electron-electron integrals.
 
@@ -795,7 +795,7 @@ def print_EE_list(ee):
         EE: list of electron-electron integrals (computed by EE_LIST function)
     """
 
-    K = ee.shape[0]
+    K = basis.K
 
     for i in range(K):
         for j in range(K):

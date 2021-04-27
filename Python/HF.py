@@ -31,7 +31,7 @@ from molecules import *
 
 mol = H2  # Molecule
 bs = sto3g_H2  # Basis set
-N = 10  # Number of electrons
+N = 2  # Number of electrons
 
 maxiter = 100  # Maximal number of iteration
 
@@ -66,10 +66,10 @@ print("Computing two-electron integrals...")
 ee = EE_list(bs)
 
 if verbose:
-    print_EE_list(ee)
+    print_EE_list(bs, ee)
 
-Pnew = np.zeros((K, K))
-P = np.zeros((K, K))
+Pnew = mpmath.matrix(K, K)
+P = mpmath.matrix(K, K)
 
 converged = False
 

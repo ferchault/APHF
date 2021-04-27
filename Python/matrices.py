@@ -108,7 +108,7 @@ def T_kinetic(basis):
     # List of basis functions
     B = basis.basis()
 
-    T = np.zeros((K, K))
+    T = mpmath.matrix(K, K)
 
     for i, b1 in enumerate(B):
         for j, b2 in enumerate(B):
@@ -158,7 +158,7 @@ def V_nuclear(basis, atom):
     # Nuclear charge
     Zn = atom.Z
 
-    Vn = np.zeros((K, K))
+    Vn = mpmath.matrix(K, K)
 
     for i, b1 in enumerate(B):
         for j, b2 in enumerate(B):
@@ -206,9 +206,9 @@ def H_core(basis, molecule):
     # Size of the basis set
     K = basis.K
 
-    Vn = np.zeros((K, K))
+    Vn = mpmath.matrix(K, K)
 
-    Vnn = np.zeros((K, K))
+    Vnn = mpmath.matrix(K, K)
 
     for atom in molecule:
         Vnn = V_nuclear(basis, atom)
@@ -244,7 +244,7 @@ def P_density(C, N):
     # Size of the basis set
     K = C.shape[0]
 
-    P = np.zeros((K, K))
+    P = mpmath.matrix(K, K)
 
     for i in range(K):
         for j in range(K):
@@ -270,7 +270,7 @@ def G_ee(basis, molecule, P, ee):
     # Size of the basis set
     K = basis.K
 
-    G = np.zeros((K, K))
+    G = mpmath.matrix(K, K)
 
     for i in range(K):
         for j in range(K):
