@@ -832,4 +832,3 @@ if __name__ == "__main__":
 
     print("\n HeH")
     print_EE_list(ee_HeH)  # Print electron-electron integrals
-
