@@ -25,7 +25,10 @@ def cfd(h, n):
 
 
 # region
-
+import functools
+@functools.lru_cache(maxsize=1)
+def get_ee(bs):
+    return EE_list(bs)
 
 def energy(lval):
     print(lval)
@@ -49,7 +52,7 @@ def energy(lval):
     S = S_overlap(bs)
     X = X_transform(S)
     Hc = H_core(bs, mol)
-    ee = EE_list(bs)
+    ee = get_ee(bs)
     Pnew = mpmath.matrix(K, K)
     P = mpmath.matrix(K, K)
     iter = 1
@@ -63,10 +66,12 @@ def energy(lval):
     return energy_el(P, F, Hc)
 
 
-coeffs = mpmath.taylor(energy, 0, 8, direction=0, h=mpmath.mpf("1e-50"), addprec=100)
+coeffs = mpmath.taylor(energy, 0, 40, direction=0, h=mpmath.mpf("1e-65"), addprec=100)
 ref = energy(mpmath.mpf("0.0"))
 target = energy(mpmath.mpf("1.0"))
-print(coeffs)
-print(ref)
-print(target)
-
+total = mpmath.mpf("0")
+for order, c in enumerate(coeffs):
+    total += c
+    print(order, c, total)
+print("ref", ref)
+print("target", target)
