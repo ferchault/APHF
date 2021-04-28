@@ -16,16 +16,16 @@
 """
 import mpmath
 
-mpmath.mp.dps = 50
-
 from basis import *
 
 import numpy as np
 
 # H2
 H2 = [
-    Atom("H", (mpmath.mpf(0), mpmath.mpf(0), mpmath.mpf(0)), mpmath.mpf(1), ["1s"]),
-    Atom("H", (mpmath.mpf(0), mpmath.mpf(0), mpmath.mpf("1.4")), mpmath.mpf(1), ["1s"]),
+    Atom("H", (mpmath.mpf(0), mpmath.mpf(0), mpmath.mpf(0)), mpmath.mpf("2"), ["1s"]),
+    Atom(
+        "H", (mpmath.mpf(0), mpmath.mpf(0), mpmath.mpf("1.4")), mpmath.mpf("0"), ["1s"]
+    ),
 ]
 sto3g_H2 = STO3G(H2)
 

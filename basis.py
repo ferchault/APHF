@@ -16,8 +16,6 @@
 """
 import mpmath
 
-mpmath.mp.dps = 50
-
 
 class Atom:
     """

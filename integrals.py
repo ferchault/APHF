@@ -19,11 +19,10 @@ import numpy as np
 import scipy.special as special
 import scipy.special as spec
 import scipy.integrate as quad
+import tqdm
 
 
 import mpmath
-
-mpmath.mp.dps = 50
 
 from basis import *
 
@@ -706,83 +705,71 @@ def EE_list(basis):
 
     EE = mpmath.matrix(K, K, K, K)
 
-    Nee = 0
+    with tqdm.tqdm(desc="2e integrals", total=len(B) ** 4) as pbar:
+        for i, b1 in enumerate(B):
+            for j, b2 in enumerate(B):
+                for k, b3 in enumerate(B):
+                    for l, b4 in enumerate(B):
 
-    for i, b1 in enumerate(B):
-        for j, b2 in enumerate(B):
-            for k, b3 in enumerate(B):
-                for l, b4 in enumerate(B):
+                        pbar.update(1)
 
-                    Nee += 1
+                        for a1, d1 in zip(b1["a"], b1["d"]):
+                            for a2, d2 in zip(b2["a"], b2["d"]):
+                                for a3, d3 in zip(b3["a"], b3["d"]):
+                                    for a4, d4 in zip(b4["a"], b4["d"]):
+                                        # Basis functions centers
+                                        R1 = b1["R"]
+                                        R2 = b2["R"]
+                                        R3 = b3["R"]
+                                        R4 = b4["R"]
 
-                    # Print update of calculation (can be long)
-                    if Nee % 500 == 0:
-                        print(
-                            "     Computed ",
-                            Nee,
-                            " two-electron integrals of ",
-                            K ** 4,
-                            ".",
-                            sep="",
-                        )
+                                        # Basis functions angular momenta
+                                        ax = b1["lx"]
+                                        ay = b1["ly"]
+                                        az = b1["lz"]
 
-                    for a1, d1 in zip(b1["a"], b1["d"]):
-                        for a2, d2 in zip(b2["a"], b2["d"]):
-                            for a3, d3 in zip(b3["a"], b3["d"]):
-                                for a4, d4 in zip(b4["a"], b4["d"]):
-                                    # Basis functions centers
-                                    R1 = b1["R"]
-                                    R2 = b2["R"]
-                                    R3 = b3["R"]
-                                    R4 = b4["R"]
+                                        # Basis functions angular momenta
+                                        bx = b2["lx"]
+                                        by = b2["ly"]
+                                        bz = b2["lz"]
 
-                                    # Basis functions angular momenta
-                                    ax = b1["lx"]
-                                    ay = b1["ly"]
-                                    az = b1["lz"]
+                                        # Basis functions angular momenta
+                                        cx = b3["lx"]
+                                        cy = b3["ly"]
+                                        cz = b3["lz"]
 
-                                    # Basis functions angular momenta
-                                    bx = b2["lx"]
-                                    by = b2["ly"]
-                                    bz = b2["lz"]
+                                        # Basis functions angular momenta
+                                        dx = b4["lx"]
+                                        dy = b4["ly"]
+                                        dz = b4["lz"]
 
-                                    # Basis functions angular momenta
-                                    cx = b3["lx"]
-                                    cy = b3["ly"]
-                                    cz = b3["lz"]
+                                        tmp = 1
+                                        tmp *= d1.conjugate() * d2.conjugate()
+                                        tmp *= d3 * d4
+                                        tmp *= electronic(
+                                            ax,
+                                            ay,
+                                            az,
+                                            bx,
+                                            by,
+                                            bz,
+                                            cx,
+                                            cy,
+                                            cz,
+                                            dx,
+                                            dy,
+                                            dz,
+                                            a1,
+                                            a2,
+                                            a3,
+                                            a4,
+                                            R1,
+                                            R2,
+                                            R3,
+                                            R4,
+                                        )
 
-                                    # Basis functions angular momenta
-                                    dx = b4["lx"]
-                                    dy = b4["ly"]
-                                    dz = b4["lz"]
-
-                                    tmp = 1
-                                    tmp *= d1.conjugate() * d2.conjugate()
-                                    tmp *= d3 * d4
-                                    tmp *= electronic(
-                                        ax,
-                                        ay,
-                                        az,
-                                        bx,
-                                        by,
-                                        bz,
-                                        cx,
-                                        cy,
-                                        cz,
-                                        dx,
-                                        dy,
-                                        dz,
-                                        a1,
-                                        a2,
-                                        a3,
-                                        a4,
-                                        R1,
-                                        R2,
-                                        R3,
-                                        R4,
-                                    )
-
-                                    EE[i, j, k, l] += tmp
+                                        EE[i, j, k, l] += tmp
 
     return EE
 
