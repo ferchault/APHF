@@ -20,6 +20,17 @@ from matrices import *
 import numpy.linalg as la
 
 
+def to_np(matrix):
+    q = np.array(matrix.tolist())
+    if q.shape == (len(q), 1):
+        return q.reshape(-1)
+    return q
+
+
+def from_np(array):
+    return mpmath.matrix(array.tolist())
+
+
 def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
     """
     Restricted Hartree-Fock self-consistent field setp.
@@ -45,26 +56,28 @@ def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
         print("\nG matrix:")
         print(G)
 
-    F = np.array(H + G)  # Compute Fock matrix
+    F = to_np(H) + to_np(G)  # Compute Fock matrix
 
     if verbose:
         print("\nFock matrix:")
         print(F)
 
     Fx = np.dot(
-        X.conj().T, np.dot(F, X)
+        to_np(X).T, np.dot(F, to_np(X))
     )  # Compute Fock matrix in the orthonormal basis set (S=I in this set)
 
     if verbose:
         print("\nFock matrix in orthogonal orbital basis:")
         print(Fx)
 
-    e, Cx = la.eigh(Fx)  # Compute eigenvalues and eigenvectors of the Fock matrix
+    e, Cx = mpmath.eigh(
+        from_np(Fx)
+    )  # Compute eigenvalues and eigenvectors of the Fock matrix
 
     # Sort eigenvalues from smallest to highest (needed to compute P correctly)
-    idx = e.argsort()
-    e = e[idx]
-    Cx = Cx[:, idx]
+    idx = to_np(e).argsort()
+    e = to_np(e)[idx]
+    Cx = to_np(Cx)[:, idx]
 
     if verbose:
         print("\nCoefficients in orthogonal orbital basis:")
@@ -77,7 +90,7 @@ def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
         print(e)
 
     C = np.dot(
-        X, Cx
+        to_np(X), to_np(Cx)
     )  # Transform coefficient matrix in the orthonormal basis to the original basis
 
     if verbose:
@@ -107,7 +120,7 @@ def delta_P(P_old, P_new):
     """
     delta = 0
 
-    n = P_old.shape[0]
+    n = to_np(P_old).shape[0]
 
     for i in range(n):
         for j in range(n):
@@ -133,7 +146,7 @@ def energy_el(P, F, H):
     """
 
     # Size of the basis set
-    K = P.shape[0]
+    K = to_np(P).shape[0]
 
     E = 0
 
