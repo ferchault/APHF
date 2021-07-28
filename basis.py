@@ -15,6 +15,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from HF import *
+
 
 class Atom:
     """
@@ -60,7 +62,7 @@ class STO3G:
 
         # Exponential coefficients for the Gaussian orbitals
         self.zeta1 = {
-            "H": 1.24,
+            "H": TO_PREC("1.24"),
             "He": 2.0925,
             "Li": 2.69,
             "Be": 3.68,
@@ -85,12 +87,12 @@ class STO3G:
         for a in atoms:  # For every atom
             for o in a.orbitals:  # For every atomic orbital
                 if o == "1s":
-                    a1 = 0.109818 * self.zeta1[a.name] ** 2
-                    a2 = 0.405771 * self.zeta1[a.name] ** 2
-                    a3 = 2.22766 * self.zeta1[a.name] ** 2
-                    d1 = 0.444635
-                    d2 = 0.535328
-                    d3 = 0.154329
+                    a1 = TO_PREC("0.109818") * self.zeta1[a.name] ** TO_PREC("2")
+                    a2 = TO_PREC("0.405771") * self.zeta1[a.name] ** TO_PREC("2")
+                    a3 = TO_PREC("2.22766") * self.zeta1[a.name] ** TO_PREC("2")
+                    d1 = TO_PREC("0.444635")
+                    d2 = TO_PREC("0.535328")
+                    d3 = TO_PREC("0.154329")
 
                     self.STO3G.append(
                         {

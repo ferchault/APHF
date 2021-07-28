@@ -37,7 +37,7 @@ def S_overlap(basis):
     # List of basis functions
     B = basis.basis()
 
-    S = np.zeros((K, K))
+    S = np.array(mpmath.zeros(K, K).tolist())
 
     for i, b1 in enumerate(B):
         for j, b2 in enumerate(B):
@@ -60,8 +60,7 @@ def S_overlap(basis):
                         R2,
                     )
 
-                    S[i, j] += tmp
-
+                    S[i, j] = tmp + S[i, j]
     return S
 
 
@@ -81,9 +80,11 @@ def X_transform(S):
         1989
     """
 
-    s, U = la.eig(S)
+    s, U = mpmath.mp.eig(NP2MP(S))
+    s = np.array(s)
+    U = MP2NP(U)
 
-    s = np.diag(s ** (-1.0 / 2.0))
+    s = np.diag(s ** (-TO_PREC("1.0") / TO_PREC("2.0")))
 
     X = np.dot(U, s)
 
@@ -105,7 +106,7 @@ def T_kinetic(basis):
     # List of basis functions
     B = basis.basis()
 
-    T = np.zeros((K, K))
+    T = np.array(mpmath.zeros(K, K).tolist())
 
     for i, b1 in enumerate(B):
         for j, b2 in enumerate(B):
@@ -155,7 +156,7 @@ def V_nuclear(basis, atom):
     # Nuclear charge
     Zn = atom.Z
 
-    Vn = np.zeros((K, K))
+    Vn = np.array(mpmath.zeros(K, K).tolist())
 
     for i, b1 in enumerate(B):
         for j, b2 in enumerate(B):
@@ -203,9 +204,9 @@ def H_core(basis, molecule):
     # Size of the basis set
     K = basis.K
 
-    Vn = np.zeros((K, K))
+    Vn = np.array(mpmath.zeros(K, K).tolist())
 
-    Vnn = np.zeros((K, K))
+    Vnn = np.array(mpmath.zeros(K, K).tolist())
 
     for atom in molecule:
         Vnn = V_nuclear(basis, atom)
@@ -241,7 +242,7 @@ def P_density(C, N):
     # Size of the basis set
     K = C.shape[0]
 
-    P = np.zeros((K, K))
+    P = np.array(mpmath.zeros(K, K).tolist())
 
     for i in range(K):
         for j in range(K):
@@ -267,7 +268,7 @@ def G_ee(basis, molecule, P, ee):
     # Size of the basis set
     K = basis.K
 
-    G = np.zeros((K, K))
+    G = np.array(mpmath.zeros(K, K).tolist())
 
     for i in range(K):
         for j in range(K):

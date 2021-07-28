@@ -18,6 +18,7 @@
 from matrices import *
 
 import numpy.linalg as la
+import mpmath
 
 
 def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
@@ -59,9 +60,13 @@ def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
         print("\nFock matrix in orthogonal orbital basis:")
         print(Fx)
 
-    e, Cx = la.eigh(Fx)  # Compute eigenvalues and eigenvectors of the Fock matrix
+    e, Cx = mpmath.eigh(
+        NP2MP(Fx)
+    )  # Compute eigenvalues and eigenvectors of the Fock matrix
 
     # Sort eigenvalues from smallest to highest (needed to compute P correctly)
+    e = np.array(e)
+    Cx = MP2NP(Cx)
     idx = e.argsort()
     e = e[idx]
     Cx = Cx[:, idx]

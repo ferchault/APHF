@@ -19,6 +19,7 @@ import numpy as np
 import scipy.misc as misc
 import scipy.special as spec
 import scipy.integrate as quad
+import mpmath
 
 misc.factorial2 = spec.factorial2
 misc.comb = spec.comb
@@ -48,16 +49,18 @@ def gaussian_product(aa, bb, Ra, Rb):
     """
 
     # Transform centers in Numpy arrays
+
     Ra = np.asarray(Ra)
     Rb = np.asarray(Rb)
 
     # Compute Gaussian product center
+
     R = (aa * Ra + bb * Rb) / (aa + bb)
 
     # Compute Gaussian product coefficient
     c = np.dot(Ra - Rb, Ra - Rb)
     c *= -aa * bb / (aa + bb)
-    c = np.exp(c)
+    c = np.vectorize(mpmath.mp.exp)(c)
 
     return R, c
 
@@ -359,7 +362,12 @@ def F(nu, x):
         ff = 1 / (2 * nu + 1) - x / (2 * nu + 3)
     else:
         # Evaluate Boys function with incomplete and complete Gamma functions
-        ff = 0.5 / x ** (nu + 0.5) * spec.gamma(nu + 0.5) * spec.gammainc(nu + 0.5, x)
+        ff = (
+            0.5
+            / x ** (nu + 0.5)
+            * mpmath.gamma(nu + 0.5)
+            * mpmath.gammainc(nu + 0.5, 0, x, regularized=True)
+        )
 
     return ff
 
@@ -702,7 +710,7 @@ def EE_list(basis):
     # List of basis functions
     B = basis.basis()
 
-    EE = np.zeros((K, K, K, K))
+    EE = np.array(mpmath.zeros(K ** 2).tolist()).reshape(K, K, K, K)
 
     Nee = 0
 
