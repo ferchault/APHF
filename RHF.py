@@ -19,19 +19,7 @@ from matrices import *
 
 import numpy.linalg as la
 
-
-def to_np(matrix):
-    q = np.array(matrix.tolist())
-    if q.shape == (len(q), 1):
-        return q.reshape(-1)
-    return q
-
-
-def from_np(array):
-    return mpmath.matrix(array.tolist())
-
-
-def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
+def RHF_step(basis,molecule,N,H,X,P_old,ee,verbose=False):
     """
     Restricted Hartree-Fock self-consistent field setp.
 
@@ -50,59 +38,52 @@ def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
         print("\nDensity matrix P:")
         print(P_old)
 
-    G = G_ee(basis, molecule, P_old, ee)  # Compute electron-electron interaction matrix
+    G = G_ee(basis,molecule,P_old,ee) # Compute electron-electron interaction matrix
 
     if verbose:
         print("\nG matrix:")
         print(G)
 
-    F = to_np(H) + to_np(G)  # Compute Fock matrix
+    F = H + G # Compute Fock matrix
 
     if verbose:
         print("\nFock matrix:")
         print(F)
 
-    Fx = np.dot(
-        to_np(X).T, np.dot(F, to_np(X))
-    )  # Compute Fock matrix in the orthonormal basis set (S=I in this set)
+    Fx = np.dot(X.conj().T,np.dot(F,X)) # Compute Fock matrix in the orthonormal basis set (S=I in this set)
 
     if verbose:
         print("\nFock matrix in orthogonal orbital basis:")
         print(Fx)
 
-    e, Cx = mpmath.eigh(
-        from_np(Fx)
-    )  # Compute eigenvalues and eigenvectors of the Fock matrix
+    e, Cx = la.eigh(Fx) # Compute eigenvalues and eigenvectors of the Fock matrix
 
     # Sort eigenvalues from smallest to highest (needed to compute P correctly)
-    idx = to_np(e).argsort()
-    e = to_np(e)[idx]
-    Cx = to_np(Cx)[:, idx]
+    idx = e.argsort()
+    e = e[idx]
+    Cx = Cx[:,idx]
 
     if verbose:
         print("\nCoefficients in orthogonal orbital basis:")
         print(Cx)
 
-    e = np.diag(e)  # Extract orbital energies as vector
+    e = np.diag(e) # Extract orbital energies as vector
 
     if verbose:
         print("\nEnergies in orthogonal orbital basis:")
         print(e)
 
-    C = np.dot(
-        to_np(X), to_np(Cx)
-    )  # Transform coefficient matrix in the orthonormal basis to the original basis
+    C = np.dot(X,Cx) # Transform coefficient matrix in the orthonormal basis to the original basis
 
     if verbose:
         print("\nCoefficients:")
         print(C)
 
-    Pnew = P_density(C, N)  # Compute the new density matrix
+    Pnew = P_density(C,N) # Compute the new density matrix
 
     return Pnew, F, e
 
-
-def delta_P(P_old, P_new):
+def delta_P(P_old,P_new):
     """
     Compute the difference between two density matrices.
 
@@ -120,16 +101,15 @@ def delta_P(P_old, P_new):
     """
     delta = 0
 
-    n = to_np(P_old).shape[0]
+    n = P_old.shape[0]
 
     for i in range(n):
         for j in range(n):
-            delta += (P_old[i, j] - P_new[i, j]) ** 2
+            delta += (P_old[i,j] - P_new[i,j])**2
 
-    return (delta / 4.0) ** (0.5)
+    return (delta / 4.)**(0.5)
 
-
-def energy_el(P, F, H):
+def energy_el(P,F,H):
     """
     Compute electronic energy.
 
@@ -146,16 +126,15 @@ def energy_el(P, F, H):
     """
 
     # Size of the basis set
-    K = to_np(P).shape[0]
+    K = P.shape[0]
 
     E = 0
 
     for i in range(K):
         for j in range(K):
-            E += 0.5 * P[i, j] * (H[i, j] + F[i, j])
+            E += 0.5 * P[i,j] * (H[i,j] + F[i,j])
 
     return E
-
 
 def energy_n(molecule):
     """
@@ -170,7 +149,7 @@ def energy_n(molecule):
     en = 0
 
     for i in range(len(molecule)):
-        for j in range(i + 1, len(molecule)):
+        for j in range(i+1,len(molecule)):
             # Select atoms from molecule
             atomi = molecule[i]
             atomj = molecule[j]
@@ -183,8 +162,7 @@ def energy_n(molecule):
 
     return en
 
-
-def energy_tot(P, F, H, molecule):
+def energy_tot(P,F,H,molecule):
     """
     Compute total energy (electronic plus nuclear).
 
@@ -196,4 +174,4 @@ def energy_tot(P, F, H, molecule):
     OUTPUT:
         ENERGY_TOT: total energy
     """
-    return energy_el(P, F, H) + energy_n(molecule)
+    return energy_el(P,F,H) + energy_n(molecule)
