@@ -20,6 +20,10 @@ import scipy.misc as misc
 import scipy.special as spec
 import scipy.integrate as quad
 
+misc.factorial2 = spec.factorial2
+misc.comb = spec.comb
+misc.factorial = spec.factorial
+
 from basis import *
 
 
