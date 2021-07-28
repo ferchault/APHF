@@ -119,7 +119,7 @@ class CarefulFloat(mpmath.mpf):
         return mpmath.mpf.__rpow__(self, other)
 
 
-TO_PREC = CarefulFloat
+TO_PREC = mpmath.mp.mpf
 
 
 def NP2MP(array):
@@ -136,8 +136,20 @@ def MP2NP(array):
 
 if __name__ == "__main__":
     mol = [
-        Atom("H", (TO_PREC("0"), TO_PREC("0"), TO_PREC("0")), TO_PREC("1"), ["1s"]),
-        Atom("H", (TO_PREC("0"), TO_PREC("0"), TO_PREC("1.4")), TO_PREC("1"), ["1s"]),
+        Atom(
+            "H",
+            (TO_PREC("0"), TO_PREC("0"), TO_PREC("0")),
+            TO_PREC("1"),
+            ["1s"],
+            TO_PREC("2"),
+        ),
+        Atom(
+            "H",
+            (TO_PREC("0"), TO_PREC("0"), TO_PREC("1.4")),
+            TO_PREC("1"),
+            ["1s"],
+            TO_PREC("0."),
+        ),
     ]
     bs = STO3G(mol)
     N = 2

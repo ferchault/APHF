@@ -171,7 +171,7 @@ def energy_n(molecule):
             Ri = np.asarray(atomi.R)
             Rj = np.asarray(atomj.R)
 
-            en += atomi.Z * atomj.Z / la.norm(Ri - Rj)
+            en += atomi.Zeff * atomj.Zeff / la.norm(Ri - Rj)
 
     return en
 

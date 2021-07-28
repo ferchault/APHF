@@ -23,7 +23,7 @@ class Atom:
     Class representing an atom.
     """
 
-    def __init__(self, name, R, Z, orbitals):
+    def __init__(self, name, R, Z, orbitals, Zeff=None):
         """
         Initializer for ATOM
 
@@ -38,6 +38,10 @@ class Atom:
         self.R = R
         self.orbitals = orbitals
         self.Z = Z
+        if Zeff is None:
+            self.Zeff = Z
+        else:
+            self.Zeff = Zeff
 
 
 class STO3G:
