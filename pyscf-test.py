@@ -15,7 +15,7 @@ mol = gto.M(atom=f"H 0 0 0; H {1.4/1.8897259886} 0 0", basis="sto-3g")
 calc = scf.RHF(mol)
 calc.kernel()
 print(calc.mo_energy)
-
+print(calc.energy_elec()[0])
 print("H2 alchemy")
 
 

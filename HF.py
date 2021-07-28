@@ -134,21 +134,22 @@ def MP2NP(array):
 ###########################
 ###########################
 
-if __name__ == "__main__":
+
+def get_energy(lval):
     mol = [
         Atom(
             "H",
             (TO_PREC("0"), TO_PREC("0"), TO_PREC("0")),
             TO_PREC("1"),
             ["1s"],
-            TO_PREC("2"),
+            TO_PREC("1") + lval,
         ),
         Atom(
             "H",
             (TO_PREC("0"), TO_PREC("0"), TO_PREC("1.4")),
             TO_PREC("1"),
             ["1s"],
-            TO_PREC("0."),
+            TO_PREC("1") - lval,
         ),
     ]
     bs = STO3G(mol)
@@ -156,7 +157,7 @@ if __name__ == "__main__":
 
     maxiter = 100  # Maximal number of iteration
 
-    verbose = True  # Print each SCF step
+    verbose = False  # Print each SCF step
 
     ###########################
     ###########################
@@ -165,25 +166,29 @@ if __name__ == "__main__":
     # Basis set size
     K = bs.K
 
-    print("Computing overlap matrix S...")
+    if verbose:
+        print("Computing overlap matrix S...")
     S = S_overlap(bs)
 
     if verbose:
         print(S)
 
-    print("Computing orthogonalization matrix X...")
+    if verbose:
+        print("Computing orthogonalization matrix X...")
     X = X_transform(S)
 
     if verbose:
         print(X)
 
-    print("Computing core Hamiltonian...")
+    if verbose:
+        print("Computing core Hamiltonian...")
     Hc = H_core(bs, mol)
 
     if verbose:
         print(Hc)
 
-    print("Computing two-electron integrals...")
+    if verbose:
+        print("Computing two-electron integrals...")
     ee = EE_list(bs)
 
     if verbose:
@@ -194,29 +199,33 @@ if __name__ == "__main__":
 
     converged = False
 
-    print("   ##################")
-    print("   Starting SCF cycle")
-    print("   ##################")
+    if verbose:
+        print("   ##################")
+        print("   Starting SCF cycle")
+        print("   ##################")
 
     iter = 1
     while not converged and iter <= maxiter:
-        print("\n\n\n#####\nSCF cycle " + str(iter) + ":")
-        print("#####")
+        if verbose:
+            print("\n\n\n#####\nSCF cycle " + str(iter) + ":")
+            print("#####")
 
         Pnew, F, E = RHF_step(bs, mol, N, Hc, X, P, ee, verbose)  # Perform an SCF step
 
         # Print results of the SCF step
-        print("\nTotal energy:", energy_tot(P, F, Hc, mol), "\n")
-        print("   Orbital energies:")
-        print("   ", np.diag(E))
+        if verbose:
+            print("\nTotal energy:", energy_tot(P, F, Hc, mol), "\n")
+            print("   Orbital energies:")
+            print("   ", np.diag(E))
 
         # Check convergence of the SCF cycle
         if delta_P(P, Pnew) < 1e-12:
             converged = True
 
-            print(
-                "\n\n\nTOTAL ENERGY:", energy_tot(P, F, Hc, mol)
-            )  # Print final, total energy
+            if verbose:
+                print(
+                    "\n\n\nTOTAL ENERGY:", energy_tot(P, F, Hc, mol)
+                )  # Print final, total energy
 
         if iter == maxiter:
             print("SCF NOT CONVERGED!")
@@ -224,3 +233,11 @@ if __name__ == "__main__":
         P = Pnew
 
         iter += 1
+    return energy_el(P, F, Hc)
+
+
+if __name__ == "__main__":
+    import sys
+
+    print(get_energy(TO_PREC("0")))
+    print(get_energy(TO_PREC("1")))
