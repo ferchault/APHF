@@ -29,13 +29,13 @@ import numpy.linalg as la
 ###########################
 ###########################
 
-mol = H2O # Molecule
-bs = sto3g_H2O # Basis set
-N = 10 # Number of electrons
+mol = H2O  # Molecule
+bs = sto3g_H2O  # Basis set
+N = 10  # Number of electrons
 
-maxiter = 100 # Maximal number of iteration
+maxiter = 100  # Maximal number of iteration
 
-verbose = True # Print each SCF step
+verbose = True  # Print each SCF step
 
 ###########################
 ###########################
@@ -57,7 +57,7 @@ if verbose:
     print(X)
 
 print("Computing core Hamiltonian...")
-Hc = H_core(bs,mol)
+Hc = H_core(bs, mol)
 
 if verbose:
     print(Hc)
@@ -68,8 +68,8 @@ ee = EE_list(bs)
 if verbose:
     print_EE_list(ee)
 
-Pnew = np.zeros((K,K))
-P = np.zeros((K,K))
+Pnew = np.zeros((K, K))
+P = np.zeros((K, K))
 
 converged = False
 
@@ -82,18 +82,20 @@ while not converged and iter <= maxiter:
     print("\n\n\n#####\nSCF cycle " + str(iter) + ":")
     print("#####")
 
-    Pnew, F, E = RHF_step(bs,mol,N,Hc,X,P,ee,verbose) # Perform an SCF step
+    Pnew, F, E = RHF_step(bs, mol, N, Hc, X, P, ee, verbose)  # Perform an SCF step
 
     # Print results of the SCF step
-    print("\nTotal energy:", energy_tot(P,F,Hc,mol),"\n")
+    print("\nTotal energy:", energy_tot(P, F, Hc, mol), "\n")
     print("   Orbital energies:")
     print("   ", np.diag(E))
 
     # Check convergence of the SCF cycle
-    if delta_P(P,Pnew) < 1e-12:
+    if delta_P(P, Pnew) < 1e-12:
         converged = True
 
-        print("\n\n\nTOTAL ENERGY:", energy_tot(P,F,Hc,mol)) # Print final, total energy
+        print(
+            "\n\n\nTOTAL ENERGY:", energy_tot(P, F, Hc, mol)
+        )  # Print final, total energy
 
     if iter == maxiter:
         print("SCF NOT CONVERGED!")
