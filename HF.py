@@ -26,7 +26,7 @@ import numpy as np
 import numpy.linalg as la
 import mpmath
 
-mpmath.mp.dps = 1000
+mpmath.mp.dps = 100
 
 
 class CarefulFloat(mpmath.mpf):
@@ -229,22 +229,23 @@ if __name__ == "__main__":
     import sys
     import functools
     import findiff
+    import subprocess
+    print ("REVISION", subprocess.check_output("git rev-parse HEAD".split()).decode("ascii").strip())
+    print ("DPS", mpmath.mp.dps)
 
-    # initial = get_energy(TO_PREC("0"))
-    # final = get_energy(TO_PREC("1"))
-    # coeffs = mpmath.taylor(get_energy, TO_PREC("0"), orders)
-    # total = TO_PREC("0")
-    # for order in range(orders):
-    #    total += coeffs[order]
-    #    print(order, mpmath.nstr(total, 20), mpmath.nstr(total - final, 20))
+    initial = get_energy(TO_PREC("0"))
+    final = get_energy(TO_PREC("1"))
+    print ("INITIAL", initial)
+    print ("FINAL", final)
 
+    print ("order, total, coefficient, error")
     def taylor(func, around, at, orders, delta):
         @functools.lru_cache(maxsize=100)
         def callfunc(lval):
             return func(lval)
 
         def format(val):
-            return mpmath.nstr(val, 5, strip_zeros=False)
+            return mpmath.nstr(val, 10, strip_zeros=False)
 
         total = 0
         final = callfunc(at)
@@ -272,9 +273,6 @@ if __name__ == "__main__":
             )
             coefficient *= (at - around) ** order / mpmath.factorial(order)
             total += coefficient
-            print(order, format(abs(total - final)))
+            print(order, format(total), format(coefficient), format(abs(total - final)))
 
-    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 20, TO_PREC("0.00000000001"))
-    # get_energy(TO_PREC("0.001"))
-
-#%%
+    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 40, TO_PREC("1e-10"))
