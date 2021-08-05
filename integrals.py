@@ -357,7 +357,7 @@ def F(nu, x):
         2006
     """
 
-    if x < 1e-8:
+    if False: #x < 1e-8:
         # Taylor expansion for argument close or equal to zero (avoid division by zero)
         ff = 1 / (2 * nu + 1) - x / (2 * nu + 3)
     else:
