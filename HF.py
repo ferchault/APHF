@@ -26,7 +26,7 @@ import numpy as np
 import numpy.linalg as la
 import mpmath
 
-mpmath.mp.dps = 50
+mpmath.mp.dps = 1000
 
 
 class CarefulFloat(mpmath.mpf):
@@ -155,7 +155,7 @@ def get_energy(lval):
     bs = STO3G(mol)
     N = 2
 
-    maxiter = 100  # Maximal number of iteration
+    maxiter = 1000  # Maximal number of iteration
 
     verbose = False  # Print each SCF step
 
@@ -206,29 +206,18 @@ def get_energy(lval):
 
     iter = 1
     while not converged and iter <= maxiter:
-        if verbose:
-            print("\n\n\n#####\nSCF cycle " + str(iter) + ":")
-            print("#####")
-
         Pnew, F, E = RHF_step(bs, mol, N, Hc, X, P, ee, verbose)  # Perform an SCF step
 
-        # Print results of the SCF step
-        if verbose:
-            print("\nTotal energy:", energy_tot(P, F, Hc, mol), "\n")
-            print("   Orbital energies:")
-            print("   ", np.diag(E))
-
         # Check convergence of the SCF cycle
-        if delta_P(P, Pnew) < 1e-12:
+        Pnew = (P + Pnew) / 2
+
+        # print(Pnew)
+        # print(iter, delta_P(P, Pnew))
+        if delta_P(P, Pnew) < TO_PREC("1e-50"):
             converged = True
 
-            if verbose:
-                print(
-                    "\n\n\nTOTAL ENERGY:", energy_tot(P, F, Hc, mol)
-                )  # Print final, total energy
-
         if iter == maxiter:
-            print("SCF NOT CONVERGED!")
+            print("SCF NOT CONVERGED!", lval)
 
         P = Pnew
 
@@ -238,6 +227,54 @@ def get_energy(lval):
 
 if __name__ == "__main__":
     import sys
+    import functools
+    import findiff
 
-    print(get_energy(TO_PREC("0")))
-    print(get_energy(TO_PREC("1")))
+    # initial = get_energy(TO_PREC("0"))
+    # final = get_energy(TO_PREC("1"))
+    # coeffs = mpmath.taylor(get_energy, TO_PREC("0"), orders)
+    # total = TO_PREC("0")
+    # for order in range(orders):
+    #    total += coeffs[order]
+    #    print(order, mpmath.nstr(total, 20), mpmath.nstr(total - final, 20))
+
+    def taylor(func, around, at, orders, delta):
+        @functools.lru_cache(maxsize=100)
+        def callfunc(lval):
+            return func(lval)
+
+        def format(val):
+            return mpmath.nstr(val, 5, strip_zeros=False)
+
+        total = 0
+        final = callfunc(at)
+        for order in range(orders):
+            if order == 0:
+                weights = np.array([TO_PREC("1.0")])
+                offsets = np.array([TO_PREC("0.0")])
+            else:
+                stencil = findiff.coefficients(deriv=order, acc=2, symbolic=True)[
+                    "center"
+                ]
+                weights = [
+                    TO_PREC(_.numerator()) / TO_PREC(_.denominator())
+                    for _ in stencil["coefficients"]
+                ]
+                offsets = stencil["offsets"]
+            coefficient = (
+                sum(
+                    [
+                        callfunc(around + delta * shift) * weight
+                        for shift, weight in zip(offsets, weights)
+                    ]
+                )
+                / delta ** order
+            )
+            coefficient *= (at - around) ** order / mpmath.factorial(order)
+            total += coefficient
+            print(order, format(abs(total - final)))
+
+    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 20, TO_PREC("0.00000000001"))
+    # get_energy(TO_PREC("0.001"))
+
+#%%
