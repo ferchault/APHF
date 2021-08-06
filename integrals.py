@@ -26,8 +26,10 @@ misc.comb = spec.comb
 misc.factorial = spec.factorial
 
 from basis import *
+import HF
 
 
+@HF.test_for_accurate_types
 def gaussian_product(aa, bb, Ra, Rb):
     """
     Gaussian produc theorem.
@@ -49,7 +51,6 @@ def gaussian_product(aa, bb, Ra, Rb):
     """
 
     # Transform centers in Numpy arrays
-
     Ra = np.asarray(Ra)
     Rb = np.asarray(Rb)
 
@@ -65,6 +66,7 @@ def gaussian_product(aa, bb, Ra, Rb):
     return R, c
 
 
+@HF.test_for_accurate_types
 def norm(ax, ay, az, aa):
     """
     General cartesian Gaussian normalization factor.
@@ -85,9 +87,9 @@ def norm(ax, ay, az, aa):
     """
 
     # Compute normalization coefficient
-    N = (2 * aa / np.pi) ** (3.0 / 4.0)
-    N *= (4 * aa) ** ((ax + ay + az) / 2)
-    N /= np.sqrt(
+    N = (2 * aa / mpmath.mp.pi) ** (mpmath.mp.mpf("3.0") / mpmath.mp.mpf("4.0"))
+    N *= (4 * aa) ** ((ax + ay + az) / mpmath.mp.mpf("2.0"))
+    N /= mpmath.mp.sqrt(
         misc.factorial2(2 * ax - 1)
         * misc.factorial2(2 * ay - 1)
         * misc.factorial2(2 * az - 1)
@@ -96,6 +98,7 @@ def norm(ax, ay, az, aa):
     return N
 
 
+@HF.test_for_accurate_types
 def Sxyz(a, b, aa, bb, Ra, Rb, R):
     """
     Compute overlap integral between two unnormalized Cartesian gaussian functions along one direction.
@@ -118,7 +121,7 @@ def Sxyz(a, b, aa, bb, Ra, Rb, R):
         Minhhuy Hô and Julio Manuel Hernández-Pérez
     """
 
-    S = 0
+    S = mpmath.mp.mpf("0.0")
 
     for i in range(a + 1):
         for j in range(b + 1):
@@ -126,7 +129,9 @@ def Sxyz(a, b, aa, bb, Ra, Rb, R):
                 tmp = misc.comb(a, i, exact=True)
                 tmp *= misc.comb(b, j, exact=True)
                 tmp *= misc.factorial2(i + j - 1, exact=True)
-                tmp /= (2.0 * (aa + bb)) ** ((i + j) / 2.0)
+                tmp /= (mpmath.mp.mpf("2.0") * (aa + bb)) ** (
+                    (i + j) / mpmath.mp.mpf("2.0")
+                )
                 tmp *= (R - Ra) ** (a - i)
                 tmp *= (R - Rb) ** (b - j)
 
@@ -135,6 +140,7 @@ def Sxyz(a, b, aa, bb, Ra, Rb, R):
     return S
 
 
+@HF.test_for_accurate_types
 def overlap(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     """
     Compute overlap integral between two Cartesian gaussian functions.
@@ -172,11 +178,14 @@ def overlap(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     S *= Sxyz(ay, by, aa, bb, Ra[1], Rb[1], R[1])  # Overlap along y
     S *= Sxyz(az, bz, aa, bb, Ra[2], Rb[2], R[2])  # Overlap along z
     S *= Na * Nb * c  # Product coefficient and normalization
-    S *= (np.pi / (aa + bb)) ** (3.0 / 2.0)  # Normalization
+    S *= (mpmath.mp.pi / (aa + bb)) ** (
+        mpmath.mp.mpf("3.0") / mpmath.mp.mpf("2.0")
+    )  # Normalization
 
     return S
 
 
+@HF.test_for_accurate_types
 def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     """
     Compute kinetic integral between two Cartesian gaussian functions.
@@ -204,6 +213,7 @@ def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
 
     R, c = gaussian_product(aa, bb, Ra, Rb)
 
+    @HF.test_for_accurate_types
     def Kxyz(ac, a1, a2, bc, b1, b2, aa, bb, Ra, Rb, Ra1, Rb1, Ra2, Rb2, Rc, R1, R2):
         """
         Compute kinetic integral between two Cartesian gaussian functions along one direction.
@@ -233,15 +243,20 @@ def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
             Minhhuy Hô and Julio Manuel Hernández-Pérez
         """
 
-        kc = 0
+        kc = mpmath.mp.mpf("0.0")
         kc += ac * bc * Sxyz(ac - 1, bc - 1, aa, bb, Ra, Rb, Rc)
         kc += -2 * aa * bc * Sxyz(ac + 1, bc - 1, aa, bb, Ra, Rb, Rc)
         kc += -2 * ac * bb * Sxyz(ac - 1, bc + 1, aa, bb, Ra, Rb, Rc)
         kc += 4 * aa * bb * Sxyz(ac + 1, bc + 1, aa, bb, Ra, Rb, Rc)
-        kc *= 0.5
+        kc *= mpmath.mp.mpf("0.5")
 
         Kc = 1
-        Kc *= c * (np.pi / (aa + bb)) ** (3.0 / 2.0) * kc
+        Kc *= (
+            c
+            * (mpmath.mp.pi / (aa + bb))
+            ** (mpmath.mp.mpf("3.0") / mpmath.mp.mpf("2.0"))
+            * kc
+        )
         Kc *= Sxyz(a1, b1, aa, bb, Ra1, Rb1, R1)
         Kc *= Sxyz(a2, b2, aa, bb, Ra2, Rb2, R2)
 
@@ -357,7 +372,7 @@ def F(nu, x):
         2006
     """
 
-    if x == mpmath.mp.mpf("0.0"): #x < 1e-8:
+    if x == mpmath.mp.mpf("0.0"):  # x < 1e-8:
         # Taylor expansion for argument close or equal to zero (avoid division by zero)
         ff = 1 / (2 * nu + 1) - x / (2 * nu + 3)
     else:

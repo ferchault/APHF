@@ -15,6 +15,27 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+
+def test_for_accurate_types(func):
+    def wrapper(*args, **kwargs):
+        def is_accurate(variable):
+            if type(variable) == tuple:
+                for e in variable:
+                    if not is_accurate(e):
+                        return False
+                return True
+            else:
+                return type(variable).__name__ == "mpf" or type(variable) == int
+
+        for variable in args:
+            assert is_accurate(variable)
+        for k, v in kwargs:
+            assert is_accurate(v)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 from numpy.lib.arraysetops import isin
 from RHF import *
 
@@ -155,7 +176,7 @@ def get_energy(lval):
     bs = STO3G(mol)
     N = 2
 
-    maxiter = 1000  # Maximal number of iteration
+    maxiter = 100000  # Maximal number of iteration
 
     verbose = False  # Print each SCF step
 
@@ -213,7 +234,7 @@ def get_energy(lval):
 
         # print(Pnew)
         # print(iter, delta_P(P, Pnew))
-        if delta_P(P, Pnew) < TO_PREC("1e-50"):
+        if delta_P(P, Pnew) < TO_PREC(f"1e-{mpmath.mp.dps+10}"):
             converged = True
 
         if iter == maxiter:
@@ -230,15 +251,22 @@ if __name__ == "__main__":
     import functools
     import findiff
     import subprocess
-    print ("REVISION", subprocess.check_output("git rev-parse HEAD".split()).decode("ascii").strip())
-    print ("DPS", mpmath.mp.dps)
+
+    print(
+        "REVISION",
+        subprocess.check_output("git rev-parse HEAD".split()).decode("ascii").strip(),
+    )
+    print("DPS", mpmath.mp.dps)
 
     initial = get_energy(TO_PREC("0"))
+    print("ok")
+    sys.exit(2)
     final = get_energy(TO_PREC("1"))
-    print ("INITIAL", initial)
-    print ("FINAL", final)
+    print("INITIAL", initial)
+    print("FINAL", final)
 
-    print ("order, total, coefficient, error")
+    print("order, total, coefficient, error")
+
     def taylor(func, around, at, orders, delta):
         @functools.lru_cache(maxsize=100)
         def callfunc(lval):
@@ -247,7 +275,7 @@ if __name__ == "__main__":
         def format(val):
             return mpmath.nstr(val, 10, strip_zeros=False)
 
-        total = 0
+        total = TO_PREC("0.0")
         final = callfunc(at)
         for order in range(orders):
             if order == 0:
@@ -262,17 +290,14 @@ if __name__ == "__main__":
                     for _ in stencil["coefficients"]
                 ]
                 offsets = stencil["offsets"]
-            coefficient = (
-                sum(
-                    [
-                        callfunc(around + delta * shift) * weight
-                        for shift, weight in zip(offsets, weights)
-                    ]
-                )
-                / delta ** order
-            )
-            coefficient *= (at - around) ** order / mpmath.factorial(order)
+            coefficient = sum(
+                [
+                    callfunc(around + delta * shift) * weight
+                    for shift, weight in zip(offsets, weights)
+                ]
+            ) / delta ** TO_PREC(order)
+            coefficient *= (at - around) ** TO_PREC(order) / mpmath.factorial(order)
             total += coefficient
-            print(order, format(total), format(coefficient), format(abs(total - final)))
+            print(order, format(total), format(coefficient), format(total - final))
 
-    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 40, TO_PREC("1e-10"))
+    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 15, TO_PREC("1e-10"))
