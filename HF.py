@@ -56,7 +56,7 @@ import numpy as np
 import numpy.linalg as la
 import mpmath
 
-mpmath.mp.dps = 1000
+mpmath.mp.dps = 100
 
 
 class CarefulFloat(mpmath.mpf):
@@ -307,4 +307,5 @@ if __name__ == "__main__":
             total += coefficient
             print(order, format(total), format(coefficient), format(total - final))
 
-    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 20, TO_PREC("1e-10"))
+    # taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 20, TO_PREC("1e-10"))
+    print(mpmath.taylor(get_energy, TO_PREC("0.0"), 15, method="step", direction=0))
