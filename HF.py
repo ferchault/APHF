@@ -308,4 +308,10 @@ if __name__ == "__main__":
             print(order, format(total), format(coefficient), format(total - final))
 
     # taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 20, TO_PREC("1e-10"))
-    print(mpmath.taylor(get_energy, TO_PREC("0.0"), 15, method="step", direction=0))
+    coeffs = mpmath.taylor(get_energy, TO_PREC("0.0"), 15, method="step", direction=0)
+    total = TO_PREC("0.0")
+    def format(val):
+        return mpmath.nstr(val, 10, strip_zeros=False)
+    for order, coeff in enumerate(coeffs):
+        total += coeff
+        print (order, format(total), format(coeff), format(total-final))
