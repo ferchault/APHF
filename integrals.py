@@ -724,7 +724,9 @@ def EE_list(basis):
     with mp.Pool(os.cpu_count()) as pool:
         results = list(
             tqdm.tqdm(
-                pool.imap(do_one, it.product(combos, repeat=4)),
+                pool.imap(
+                    do_one, [(mpmath.mp.dps, *_) for _ in it.product(combos, repeat=4)]
+                ),
                 total=len(combos) ** 4,
             )
         )
@@ -741,7 +743,8 @@ def do_one(parts):
         EE: list of two-electron integrals, with indices (i,j,k,l)
     """
 
-    p, q, r, s = parts
+    dps, p, q, r, s = parts
+    mpmath.mp.dps = dps
     i, b1 = p
     j, b2 = q
     k, b3 = r

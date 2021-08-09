@@ -64,12 +64,17 @@ def get_ee(cachename):
     for result in results:
         i, j, k, l, E = result
         EE[i, j, k, l] = E
+
     return EE
 
 
-def get_energy(config, step, offset, lval=None):
+def get_energy(config, offset, lval):
+    mpmath.mp.dps = config["meta"].getint("dps")
+
+    step = mpmath.mpf(f'1e-{config["meta"].getint("deltalambda")}')
     if lval is None:
         lval = step * offset
+
     mol, bs, N = build_system(config, lval)
     ee = get_ee(config["meta"]["cache"])
     K = bs.K
@@ -117,6 +122,7 @@ def init_config(infile):
 def cache_EE_integrals(config):
     cachename = config["meta"]["cache"] + "-ee.cache"
     if os.path.exists(cachename):
+        print("read EE from cache")
         return
     mol, bs, N = build_system(config, 0)
     ee = EE_list(bs)
@@ -182,22 +188,26 @@ def main(infile, outfile):
         sum([list(stencil["offsets"]) for order, stencil in stencils.items()], [])
     )
     step = mpmath.mpf(f'1e-{config["meta"].getint("deltalambda")}')
-    tasks = [(config, step, _) for _ in offsets]
+    tasks = [(config, _, None) for _ in offsets]
+    tasks += [(config, None, mpmath.mpf("1.0"))]
 
     # evaluate
     with mp.Pool(os.cpu_count()) as p:
         res = p.starmap(get_energy, tqdm.tqdm(tasks, total=len(tasks)), chunksize=1)
+
     res = dict(res)
     config.add_section("singlepoints")
     for c, item in enumerate(res.items()):
         offset, v = item
+        if offset is None:
+            offset = "target"
         iter, v = v
-        config["singlepoints"][f"energy-{offset}"] = str(v)
-        config["singlepoints"][f"iter-{offset}"] = str(iter)
+        config["singlepoints"][f"energy_{offset}"] = str(v)
+        config["singlepoints"][f"iter_{offset}"] = str(iter)
 
     # store endpoints
     ref = res[0][1]
-    target = get_energy(config, None, None, lval=mpmath.mpf("1.0"))[1][1]
+    target = res[None][1]
     config.add_section("endpoints")
     config["endpoints"]["reference"] = str(ref)
     config["endpoints"]["target"] = str(target)
