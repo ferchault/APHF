@@ -154,7 +154,7 @@ def V_nuclear(basis, atom):
     Rn = atom.R
 
     # Nuclear charge
-    Zn = atom.Zeff
+    Zn = atom.Z
 
     Vn = np.array(mpmath.zeros(K, K).tolist())
 

@@ -20,6 +20,10 @@ import scipy.misc as misc
 import scipy.special as spec
 import scipy.integrate as quad
 import mpmath
+import multiprocessing as mp
+import os
+import tqdm
+import itertools as it
 
 misc.factorial2 = spec.factorial2
 misc.comb = spec.comb
@@ -707,6 +711,29 @@ def electronic(
 def EE_list(basis):
     """
     Multidimensional array of two-electron integrals.
+    INPUT:
+        BASIS: Basis set
+    OUTPUT:
+        EE: list of two-electron integrals, with indices (i,j,k,l)
+    """
+
+    # List of basis functions
+    B = basis.basis()
+
+    combos = [_ for _ in enumerate(B)]
+    with mp.Pool(os.cpu_count()) as pool:
+        results = list(
+            tqdm.tqdm(
+                pool.imap(do_one, it.product(combos, repeat=4)),
+                total=len(combos) ** 4,
+            )
+        )
+    return results
+
+
+def do_one(parts):
+    """
+    Multidimensional array of two-electron integrals.
 
     INPUT:
         BASIS: Basis set
@@ -714,79 +741,72 @@ def EE_list(basis):
         EE: list of two-electron integrals, with indices (i,j,k,l)
     """
 
-    # Size of the basis set
-    K = basis.K
+    p, q, r, s = parts
+    i, b1 = p
+    j, b2 = q
+    k, b3 = r
+    l, b4 = s
+    ret = mpmath.mpf("0.0")
 
-    # List of basis functions
-    B = basis.basis()
+    for a1, d1 in zip(b1["a"], b1["d"]):
+        for a2, d2 in zip(b2["a"], b2["d"]):
+            for a3, d3 in zip(b3["a"], b3["d"]):
+                for a4, d4 in zip(b4["a"], b4["d"]):
+                    # Basis functions centers
+                    R1 = b1["R"]
+                    R2 = b2["R"]
+                    R3 = b3["R"]
+                    R4 = b4["R"]
 
-    EE = np.array(mpmath.zeros(K ** 2).tolist()).reshape(K, K, K, K)
+                    # Basis functions angular momenta
+                    ax = b1["lx"]
+                    ay = b1["ly"]
+                    az = b1["lz"]
 
-    for i, b1 in enumerate(B):
-        for j, b2 in enumerate(B):
-            for k, b3 in enumerate(B):
-                for l, b4 in enumerate(B):
-                    print(i, j, k, l)
+                    # Basis functions angular momenta
+                    bx = b2["lx"]
+                    by = b2["ly"]
+                    bz = b2["lz"]
 
-                    for a1, d1 in zip(b1["a"], b1["d"]):
-                        for a2, d2 in zip(b2["a"], b2["d"]):
-                            for a3, d3 in zip(b3["a"], b3["d"]):
-                                for a4, d4 in zip(b4["a"], b4["d"]):
-                                    # Basis functions centers
-                                    R1 = b1["R"]
-                                    R2 = b2["R"]
-                                    R3 = b3["R"]
-                                    R4 = b4["R"]
+                    # Basis functions angular momenta
+                    cx = b3["lx"]
+                    cy = b3["ly"]
+                    cz = b3["lz"]
 
-                                    # Basis functions angular momenta
-                                    ax = b1["lx"]
-                                    ay = b1["ly"]
-                                    az = b1["lz"]
+                    # Basis functions angular momenta
+                    dx = b4["lx"]
+                    dy = b4["ly"]
+                    dz = b4["lz"]
 
-                                    # Basis functions angular momenta
-                                    bx = b2["lx"]
-                                    by = b2["ly"]
-                                    bz = b2["lz"]
+                    tmp = 1
+                    tmp *= d1.conjugate() * d2.conjugate()
+                    tmp *= d3 * d4
+                    tmp *= electronic(
+                        ax,
+                        ay,
+                        az,
+                        bx,
+                        by,
+                        bz,
+                        cx,
+                        cy,
+                        cz,
+                        dx,
+                        dy,
+                        dz,
+                        a1,
+                        a2,
+                        a3,
+                        a4,
+                        R1,
+                        R2,
+                        R3,
+                        R4,
+                    )
 
-                                    # Basis functions angular momenta
-                                    cx = b3["lx"]
-                                    cy = b3["ly"]
-                                    cz = b3["lz"]
+                    ret += tmp
 
-                                    # Basis functions angular momenta
-                                    dx = b4["lx"]
-                                    dy = b4["ly"]
-                                    dz = b4["lz"]
-
-                                    tmp = 1
-                                    tmp *= d1.conjugate() * d2.conjugate()
-                                    tmp *= d3 * d4
-                                    tmp *= electronic(
-                                        ax,
-                                        ay,
-                                        az,
-                                        bx,
-                                        by,
-                                        bz,
-                                        cx,
-                                        cy,
-                                        cz,
-                                        dx,
-                                        dy,
-                                        dz,
-                                        a1,
-                                        a2,
-                                        a3,
-                                        a4,
-                                        R1,
-                                        R2,
-                                        R3,
-                                        R4,
-                                    )
-
-                                    EE[i, j, k, l] += tmp
-
-    return EE
+    return i, j, k, l, ret
 
 
 def print_EE_list(ee):

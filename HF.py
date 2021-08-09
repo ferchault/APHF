@@ -15,7 +15,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
+import sys
+import functools
+import findiff
+import subprocess
+import hashlib
+import configparser
+import multiprocessing as mp
+import os
+import click
+import basis_set_exchange as bse
+import pickle
 from numpy.lib.arraysetops import isin
 from RHF import *
 
@@ -41,42 +51,36 @@ def MP2NP(array):
 ###########################
 ###########################
 ###########################
+@functools.lru_cache(maxsize=1)
+def get_ee(cachename):
+    with open(cachename + "-ee.cache", "rb") as fh:
+        results = pickle.load(fh)
+    K = 0
+    for result in results:
+        i, j, k, l, E = result
+        K = max(K, max(i, j, k, l))
+    K = K + 1
+    EE = mpmath.matrix(K, K, K, K)
+    for result in results:
+        i, j, k, l, E = result
+        EE[i, j, k, l] = E
+    return EE
 
 
-def get_energy(lval):
-    mol = [
-        Atom(
-            "H",
-            (mpmath.mp.mpf("0"), mpmath.mp.mpf("0"), mpmath.mp.mpf("0")),
-            mpmath.mp.mpf("1"),
-            ["1s"],
-            mpmath.mp.mpf("1") + lval,
-        ),
-        Atom(
-            "H",
-            (mpmath.mp.mpf("0"), mpmath.mp.mpf("0"), mpmath.mp.mpf("1.4")),
-            mpmath.mp.mpf("1"),
-            ["1s"],
-            mpmath.mp.mpf("1") - lval,
-        ),
-    ]
-    bs = STO3G(mol)
-    N = 2
+def get_energy(config, step, offset, lval=None):
+    if lval is None:
+        lval = step * offset
+    mol, bs, N = build_system(config, lval)
+    ee = get_ee(config["meta"]["cache"])
+    K = bs.K
+    S = S_overlap(bs)
+    X = X_transform(S)
+    Hc = H_core(bs, mol)
 
     maxiter = 100000  # Maximal number of iteration
 
-    # Basis set size
-    K = bs.K
-
-    S = S_overlap(bs)
-
-    X = X_transform(S)
-
-    Hc = H_core(bs, mol)
-    ee = EE_list(bs)
-
-    Pnew = np.zeros((K, K))
-    P = np.zeros((K, K))
+    Pnew = np.array(mpmath.zeros(K, K).tolist())
+    P = np.array(mpmath.zeros(K, K).tolist())
 
     converged = False
 
@@ -98,72 +102,121 @@ def get_energy(lval):
         P = Pnew
 
         iter += 1
-    return energy_el(P, F, Hc)
+    return offset, (iter, energy_el(P, F, Hc))
+
+
+def init_config(infile):
+    config = configparser.ConfigParser()
+    with open(infile) as fh:
+        config.read_file(fh)
+    with open(infile, "rb") as fh:
+        config["meta"]["cache"] = hashlib.sha256(fh.read()).hexdigest()
+    return config
+
+
+def cache_EE_integrals(config):
+    cachename = config["meta"]["cache"] + "-ee.cache"
+    if os.path.exists(cachename):
+        return
+    mol, bs, N = build_system(config, 0)
+    ee = EE_list(bs)
+    with open(cachename, "wb") as fh:
+        pickle.dump(ee, fh)
+
+
+def build_system(config, lval):
+    reference_Zs = config["meta"]["reference"].strip().split()
+    basis_Zs = config["meta"]["basis"].strip().split()
+    target_Zs = config["meta"]["target"].strip().split()
+    coords = config["meta"]["coords"].strip().split("\n")
+
+    mol = []
+
+    N = 0
+    for ref, tar, bas, coord in zip(reference_Zs, target_Zs, basis_Zs, coords):
+        N += int(ref)
+        element = bse.lut.element_data_from_Z(int(bas))[0].capitalize()
+        Z = mpmath.mpf(tar) * lval + (1 - lval) * mpmath.mpf(ref)
+        atom = Atom(element, tuple([mpmath.mpf(_) for _ in coord.split()]), Z, bas)
+        mol.append(atom)
+    bs = Basis(config["meta"]["basisset"], mol)
+
+    return mol, bs, N
+
+
+def get_stencils(maxorder):
+    stencils = {}
+    for order in range(maxorder):
+        if order == 0:
+            weights = np.array([mpmath.mp.mpf("1.0")])
+            offsets = np.array([1])
+        else:
+            lookup = findiff.coefficients(deriv=order, acc=2, symbolic=True)["center"]
+            weights = [
+                mpmath.mp.mpf(_.numerator()) / mpmath.mp.mpf(_.denominator())
+                for _ in lookup["coefficients"]
+            ]
+            offsets = lookup["offsets"]
+        stencils[order] = {"weights": weights, "offsets": offsets}
+    return stencils
+
+
+@click.command()
+@click.argument("infile")
+@click.argument("outfile")
+def main(infile, outfile):
+    config = init_config(infile)
+    mp.set_start_method("spawn")
+    mpmath.mp.dps = config["meta"].getint("dps")
+    config["meta"]["revision"] = (
+        subprocess.check_output("git rev-parse HEAD".split()).decode("ascii").strip()
+    )
+
+    # caching
+    cache_EE_integrals(config)
+
+    # find work
+    maxorder = config["meta"].getint("orders")
+    stencils = get_stencils(maxorder)
+    offsets = set(
+        sum([list(stencil["offsets"]) for order, stencil in stencils.items()], [])
+    )
+    step = mpmath.mpf(f'1e-{config["meta"].getint("deltalambda")}')
+    tasks = [(config, step, _) for _ in offsets]
+
+    # evaluate
+    with mp.Pool(os.cpu_count()) as p:
+        res = p.starmap(get_energy, tqdm.tqdm(tasks, total=len(tasks)), chunksize=1)
+    res = dict(res)
+    config.add_section("singlepoints")
+    for c, item in enumerate(res.items()):
+        offset, v = item
+        iter, v = v
+        config["singlepoints"][f"energy-{offset}"] = str(v)
+        config["singlepoints"][f"iter-{offset}"] = str(iter)
+
+    # store endpoints
+    ref = res[0][1]
+    target = get_energy(config, None, None, lval=mpmath.mpf("1.0"))[1][1]
+    config.add_section("endpoints")
+    config["endpoints"]["reference"] = str(ref)
+    config["endpoints"]["target"] = str(target)
+
+    # Taylor coefficients
+    config.add_section("coefficients")
+    for order in range(maxorder):
+        stencil = stencils[order]
+        coefficient = sum(
+            [
+                res[shift][1] * weight
+                for shift, weight in zip(stencil["offsets"], stencil["weights"])
+            ]
+        ) / step ** mpmath.mp.mpf(order)
+        coefficient /= mpmath.factorial(order)
+        config["coefficients"][f"order-{order}"] = str(coefficient)
+    with open(outfile, "w") as fh:
+        config.write(fh)
 
 
 if __name__ == "__main__":
-    import sys
-    import functools
-    import findiff
-    import subprocess
-
-    print(
-        "REVISION",
-        subprocess.check_output("git rev-parse HEAD".split()).decode("ascii").strip(),
-    )
-    print("DPS", mpmath.mp.dps)
-
-    initial = get_energy(mpmath.mp.mpf("0"))
-    final = get_energy(mpmath.mp.mpf("1"))
-    print("INITIAL", initial)
-    print("FINAL", final)
-
-    print("order, total, coefficient, error")
-
-    def taylor(func, around, at, orders, delta):
-        @functools.lru_cache(maxsize=100)
-        def callfunc(lval):
-            return func(lval)
-
-        def format(val):
-            return mpmath.nstr(val, 10, strip_zeros=False)
-
-        total = mpmath.mp.mpf("0.0")
-        final = callfunc(at)
-        for order in range(orders):
-            if order == 0:
-                weights = np.array([mpmath.mp.mpf("1.0")])
-                offsets = np.array([mpmath.mp.mpf("0.0")])
-            else:
-                stencil = findiff.coefficients(deriv=order, acc=2, symbolic=True)[
-                    "center"
-                ]
-                weights = [
-                    mpmath.mp.mpf(_.numerator()) / mpmath.mp.mpf(_.denominator())
-                    for _ in stencil["coefficients"]
-                ]
-                offsets = stencil["offsets"]
-            coefficient = sum(
-                [
-                    callfunc(around + delta * shift) * weight
-                    for shift, weight in zip(offsets, weights)
-                ]
-            ) / delta ** mpmath.mp.mpf(order)
-            coefficient *= (at - around) ** mpmath.mp.mpf(order) / mpmath.factorial(
-                order
-            )
-            total += coefficient
-            print(order, format(total), format(coefficient), format(total - final))
-
-    # taylor(get_energy, mpmath.mp.mpf("0."), mpmath.mp.mpf("1."), 20, mpmath.mp.mpf("1e-10"))
-    coeffs = mpmath.taylor(
-        get_energy, mpmath.mp.mpf("0.0"), 15, method="step", direction=0
-    )
-    total = mpmath.mp.mpf("0.0")
-
-    def format(val):
-        return mpmath.nstr(val, 10, strip_zeros=False)
-
-    for order, coeff in enumerate(coeffs):
-        total += coeff
-        print(order, format(total), format(coeff), format(total - final))
+    main()
