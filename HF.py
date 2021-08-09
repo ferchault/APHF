@@ -19,11 +19,16 @@
 def test_for_accurate_types(func):
     def wrapper(*args, **kwargs):
         def is_accurate(variable):
+            return True
             if type(variable) == tuple:
                 for e in variable:
                     if not is_accurate(e):
                         return False
                 return True
+            elif type(variable) == np.ndarray:
+                if len(variable.shape) == 0:
+                    return True
+                return is_accurate(variable[0])
             else:
                 return type(variable).__name__ == "mpf" or type(variable) == int
 
@@ -31,7 +36,11 @@ def test_for_accurate_types(func):
             assert is_accurate(variable)
         for k, v in kwargs:
             assert is_accurate(v)
-        return func(*args, **kwargs)
+        retval = func(*args, **kwargs)
+        if not is_accurate(retval):
+            print(type(retval))
+        assert is_accurate(retval)
+        return retval
 
     return wrapper
 
@@ -47,7 +56,7 @@ import numpy as np
 import numpy.linalg as la
 import mpmath
 
-mpmath.mp.dps = 100
+mpmath.mp.dps = 1000
 
 
 class CarefulFloat(mpmath.mpf):
@@ -234,7 +243,7 @@ def get_energy(lval):
 
         # print(Pnew)
         # print(iter, delta_P(P, Pnew))
-        if delta_P(P, Pnew) < TO_PREC(f"1e-{mpmath.mp.dps+10}"):
+        if delta_P(P, Pnew) < TO_PREC(f"1e-{mpmath.mp.dps-3}"):
             converged = True
 
         if iter == maxiter:
@@ -259,8 +268,6 @@ if __name__ == "__main__":
     print("DPS", mpmath.mp.dps)
 
     initial = get_energy(TO_PREC("0"))
-    print("ok")
-    sys.exit(2)
     final = get_energy(TO_PREC("1"))
     print("INITIAL", initial)
     print("FINAL", final)
@@ -300,4 +307,4 @@ if __name__ == "__main__":
             total += coefficient
             print(order, format(total), format(coefficient), format(total - final))
 
-    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 15, TO_PREC("1e-10"))
+    taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 20, TO_PREC("1e-10"))

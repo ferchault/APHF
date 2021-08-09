@@ -329,6 +329,7 @@ def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     return K
 
 
+@HF.test_for_accurate_types
 def f(j, l, m, a, b):
     """
     Expansion coefficient f.
@@ -340,12 +341,12 @@ def f(j, l, m, a, b):
         1998
     """
 
-    f = 0
+    f = mpmath.mp.mpf("0.0")
 
     for k in range(max(0, j - m), min(j, l) + 1):
         tmp = 1
-        tmp *= spec.binom(l, k)
-        tmp *= spec.binom(m, j - k)
+        tmp *= spec.comb(l, k, exact=True)
+        tmp *= spec.comb(m, j - k, exact=True)
         tmp *= a ** (l - k)
         tmp *= b ** (m + k - j)
 
@@ -354,6 +355,7 @@ def f(j, l, m, a, b):
     return f
 
 
+@HF.test_for_accurate_types
 def F(nu, x):
     """
     Boys function.
@@ -374,12 +376,12 @@ def F(nu, x):
 
     if x == mpmath.mp.mpf("0.0"):  # x < 1e-8:
         # Taylor expansion for argument close or equal to zero (avoid division by zero)
-        ff = 1 / (2 * nu + 1) - x / (2 * nu + 3)
+        ff = mpmath.mp.mpf("1.0") / (2 * nu + 1)
     else:
         # Evaluate Boys function with incomplete and complete Gamma functions
         ff = (
-            0.5
-            / x ** (nu + 0.5)
+            mpmath.mp.mpf("0.5")
+            / x ** (nu + mpmath.mp.mpf("0.5"))
             * mpmath.gamma(nu + 0.5)
             * mpmath.gammainc(nu + 0.5, 0, x, regularized=True)
         )
@@ -387,6 +389,7 @@ def F(nu, x):
     return ff
 
 
+@HF.test_for_accurate_types
 def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
     """
     Compute nuclear-electron interaction integrals.
@@ -409,11 +412,11 @@ def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
         1998
     """
 
-    Vn = 0
+    Vn = mpmath.mp.mpf("0.0")
 
     # Intermediate variable
     g = aa + bb
-    eps = 1.0 / (4 * g)
+    eps = mpmath.mp.mpf("1.0") / (4 * g)
 
     Rp, c = gaussian_product(aa, bb, Ra, Rb)  # Gaussian product
 
@@ -472,11 +475,11 @@ def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
     Na = norm(ax, ay, az, aa)
     Nb = norm(bx, by, bz, bb)
 
-    Vn *= -Zn * Na * Nb * c * 2 * np.pi / g
-
+    Vn *= -Zn * Na * Nb * c * 2 * mpmath.mp.pi / g
     return Vn
 
 
+@HF.test_for_accurate_types
 def electronic(
     ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz, aa, bb, cc, dd, Ra, Rb, Rc, Rd
 ):
@@ -510,7 +513,7 @@ def electronic(
             http://spider.shef.ac.uk/
     """
 
-    G = 0
+    G = mpmath.mp.mpf("0.0")
 
     # Intermediate variable
     g1 = aa + bb
@@ -520,8 +523,9 @@ def electronic(
     Rp, c1 = gaussian_product(aa, bb, Ra, Rb)
     Rq, c2 = gaussian_product(cc, dd, Rc, Rd)
 
-    delta = 1 / (4 * g1) + 1 / (4 * g2)
+    delta = mpmath.mp.mpf("1.0") / (4 * g1) + mpmath.mp.mpf("1.0") / (4 * g2)
 
+    @HF.test_for_accurate_types
     def theta(l, l1, l2, a, b, r, g):
         """
         Expansion coefficient theta.
@@ -533,14 +537,14 @@ def electronic(
             1998
         """
 
-        t = 1
-        t *= f(l, l1, l2, a, b)
+        t = f(l, l1, l2, a, b)
         t *= misc.factorial(l, exact=True)
         t *= g ** (r - l)
         t /= misc.factorial(r, exact=True) * misc.factorial(l - 2 * r, exact=True)
 
         return t
 
+    @HF.test_for_accurate_types
     def B(l, ll, r, rr, i, l1, l2, Ra, Rb, Rp, g1, l3, l4, Rc, Rd, Rq, g2):
         """
         Expansion coefficient B.
@@ -552,8 +556,7 @@ def electronic(
             1998
         """
 
-        b = 1
-        b *= (-1) ** (l) * theta(l, l1, l2, Rp - Ra, Rp - Rb, r, g1)
+        b = (-1) ** (l) * theta(l, l1, l2, Rp - Ra, Rp - Rb, r, g1)
         b *= theta(ll, l3, l4, Rq - Rc, Rq - Rd, rr, g2)
         b *= (-1) ** i * (2 * delta) ** (2 * (r + rr))
         b *= misc.factorial(l + ll - 2 * r - 2 * rr, exact=True)
@@ -682,7 +685,12 @@ def electronic(
                                                                     np.dot(
                                                                         Rp - Rq, Rp - Rq
                                                                     )
-                                                                    / (4.0 * delta),
+                                                                    / (
+                                                                        mpmath.mp.mpf(
+                                                                            "4.0"
+                                                                        )
+                                                                        * delta
+                                                                    ),
                                                                 )
 
                                                                 G += Bx * By * Bz * ff
@@ -701,9 +709,9 @@ def electronic(
         * c1
         * c2
         * 2
-        * np.pi ** 2
+        * mpmath.mp.pi ** 2
         / (g1 * g2)
-        * np.sqrt(np.pi / (g1 + g2))
+        * mpmath.mp.sqrt(mpmath.mp.pi / (g1 + g2))
     )
 
     return G

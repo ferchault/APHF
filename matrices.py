@@ -19,6 +19,7 @@ from basis import *
 from integrals import *
 
 import numpy.linalg as la
+import HF
 
 
 def S_overlap(basis):
@@ -64,6 +65,7 @@ def S_overlap(basis):
     return S
 
 
+@HF.test_for_accurate_types
 def X_transform(S):
     """
     Compute the transformation matrix X using canonical orthogonalization.
@@ -222,6 +224,7 @@ def H_core(basis, molecule):
     return T + Vn
 
 
+@HF.test_for_accurate_types
 def P_density(C, N):
     """
     Compute dansity matrix.
@@ -274,7 +277,9 @@ def G_ee(basis, molecule, P, ee):
         for j in range(K):
             for k in range(K):
                 for l in range(K):
-                    G[i, j] += P[k, l] * (ee[i, j, k, l] - 0.5 * ee[i, l, k, j])
+                    G[i, j] += P[k, l] * (
+                        ee[i, j, k, l] - mpmath.mp.mpf("0.5") * ee[i, l, k, j]
+                    )
 
     return G
 

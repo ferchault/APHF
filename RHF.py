@@ -118,7 +118,7 @@ def delta_P(P_old, P_new):
         for j in range(n):
             delta += (P_old[i, j] - P_new[i, j]) ** 2
 
-    return (delta / 4.0) ** (0.5)
+    return (delta / mpmath.mp.mpf("4.0")) ** mpmath.mp.mpf("0.5")
 
 
 def energy_el(P, F, H):
@@ -144,7 +144,7 @@ def energy_el(P, F, H):
 
     for i in range(K):
         for j in range(K):
-            E += 0.5 * P[i, j] * (H[i, j] + F[i, j])
+            E += mpmath.mp.mpf("0.5") * P[i, j] * (H[i, j] + F[i, j])
 
     return E
 
