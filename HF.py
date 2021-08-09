@@ -122,7 +122,6 @@ def init_config(infile):
 def cache_EE_integrals(config):
     cachename = config["meta"]["cache"] + "-ee.cache"
     if os.path.exists(cachename):
-        print("read EE from cache")
         return
     mol, bs, N = build_system(config, 0)
     ee = EE_list(bs)
@@ -152,7 +151,7 @@ def build_system(config, lval):
 
 def get_stencils(maxorder):
     stencils = {}
-    for order in range(maxorder):
+    for order in tqdm.tqdm(range(maxorder), desc="Build stencil"):
         if order == 0:
             weights = np.array([mpmath.mp.mpf("1.0")])
             offsets = np.array([1])
@@ -193,7 +192,11 @@ def main(infile, outfile):
 
     # evaluate
     with mp.Pool(os.cpu_count()) as p:
-        res = p.starmap(get_energy, tqdm.tqdm(tasks, total=len(tasks)), chunksize=1)
+        res = p.starmap(
+            get_energy,
+            tqdm.tqdm(tasks, total=len(tasks), desc="Function evaluatons"),
+            chunksize=1,
+        )
 
     res = dict(res)
     config.add_section("singlepoints")

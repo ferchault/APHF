@@ -728,6 +728,7 @@ def EE_list(basis):
                     do_one, [(mpmath.mp.dps, *_) for _ in it.product(combos, repeat=4)]
                 ),
                 total=len(combos) ** 4,
+                desc="2e integrals",
             )
         )
     return results
