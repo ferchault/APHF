@@ -26,10 +26,8 @@ misc.comb = spec.comb
 misc.factorial = spec.factorial
 
 from basis import *
-import HF
 
 
-@HF.test_for_accurate_types
 def gaussian_product(aa, bb, Ra, Rb):
     """
     Gaussian produc theorem.
@@ -66,7 +64,6 @@ def gaussian_product(aa, bb, Ra, Rb):
     return R, c
 
 
-@HF.test_for_accurate_types
 def norm(ax, ay, az, aa):
     """
     General cartesian Gaussian normalization factor.
@@ -98,7 +95,6 @@ def norm(ax, ay, az, aa):
     return N
 
 
-@HF.test_for_accurate_types
 def Sxyz(a, b, aa, bb, Ra, Rb, R):
     """
     Compute overlap integral between two unnormalized Cartesian gaussian functions along one direction.
@@ -140,7 +136,6 @@ def Sxyz(a, b, aa, bb, Ra, Rb, R):
     return S
 
 
-@HF.test_for_accurate_types
 def overlap(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     """
     Compute overlap integral between two Cartesian gaussian functions.
@@ -185,7 +180,6 @@ def overlap(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     return S
 
 
-@HF.test_for_accurate_types
 def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     """
     Compute kinetic integral between two Cartesian gaussian functions.
@@ -213,7 +207,6 @@ def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
 
     R, c = gaussian_product(aa, bb, Ra, Rb)
 
-    @HF.test_for_accurate_types
     def Kxyz(ac, a1, a2, bc, b1, b2, aa, bb, Ra, Rb, Ra1, Rb1, Ra2, Rb2, Rc, R1, R2):
         """
         Compute kinetic integral between two Cartesian gaussian functions along one direction.
@@ -329,7 +322,6 @@ def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     return K
 
 
-@HF.test_for_accurate_types
 def f(j, l, m, a, b):
     """
     Expansion coefficient f.
@@ -355,7 +347,6 @@ def f(j, l, m, a, b):
     return f
 
 
-@HF.test_for_accurate_types
 def F(nu, x):
     """
     Boys function.
@@ -389,7 +380,6 @@ def F(nu, x):
     return ff
 
 
-@HF.test_for_accurate_types
 def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
     """
     Compute nuclear-electron interaction integrals.
@@ -479,7 +469,6 @@ def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
     return Vn
 
 
-@HF.test_for_accurate_types
 def electronic(
     ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz, aa, bb, cc, dd, Ra, Rb, Rc, Rd
 ):
@@ -525,7 +514,6 @@ def electronic(
 
     delta = mpmath.mp.mpf("1.0") / (4 * g1) + mpmath.mp.mpf("1.0") / (4 * g2)
 
-    @HF.test_for_accurate_types
     def theta(l, l1, l2, a, b, r, g):
         """
         Expansion coefficient theta.
@@ -544,7 +532,6 @@ def electronic(
 
         return t
 
-    @HF.test_for_accurate_types
     def B(l, ll, r, rr, i, l1, l2, Ra, Rb, Rp, g1, l3, l4, Rc, Rd, Rq, g2):
         """
         Expansion coefficient B.
@@ -735,25 +722,11 @@ def EE_list(basis):
 
     EE = np.array(mpmath.zeros(K ** 2).tolist()).reshape(K, K, K, K)
 
-    Nee = 0
-
     for i, b1 in enumerate(B):
         for j, b2 in enumerate(B):
             for k, b3 in enumerate(B):
                 for l, b4 in enumerate(B):
-
-                    Nee += 1
-
-                    # Print update of calculation (can be long)
-                    if Nee % 500 == 0:
-                        print(
-                            "     Computed ",
-                            Nee,
-                            " two-electron integrals of ",
-                            K ** 4,
-                            ".",
-                            sep="",
-                        )
+                    print(i, j, k, l)
 
                     for a1, d1 in zip(b1["a"], b1["d"]):
                         for a2, d2 in zip(b2["a"], b2["d"]):

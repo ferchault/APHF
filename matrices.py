@@ -19,7 +19,6 @@ from basis import *
 from integrals import *
 
 import numpy.linalg as la
-import HF
 
 
 def S_overlap(basis):
@@ -65,7 +64,6 @@ def S_overlap(basis):
     return S
 
 
-@HF.test_for_accurate_types
 def X_transform(S):
     """
     Compute the transformation matrix X using canonical orthogonalization.
@@ -86,7 +84,7 @@ def X_transform(S):
     s = np.array(s)
     U = MP2NP(U)
 
-    s = np.diag(s ** (-TO_PREC("1.0") / TO_PREC("2.0")))
+    s = np.diag(s ** (-mpmath.mp.mpf("1.0") / mpmath.mp.mpf("2.0")))
 
     X = np.dot(U, s)
 
@@ -224,7 +222,6 @@ def H_core(basis, molecule):
     return T + Vn
 
 
-@HF.test_for_accurate_types
 def P_density(C, N):
     """
     Compute dansity matrix.
