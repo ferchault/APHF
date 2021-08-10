@@ -75,8 +75,6 @@ def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
         print("\nCoefficients in orthogonal orbital basis:")
         print(Cx)
 
-    e = np.diag(e)  # Extract orbital energies as vector
-
     if verbose:
         print("\nEnergies in orthogonal orbital basis:")
         print(e)

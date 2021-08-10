@@ -97,17 +97,21 @@ def get_energy(config, offset, lval):
         Pnew = (P + Pnew) / 2
 
         # print(Pnew)
-        # print(iter, delta_P(P, Pnew))
+        if iter % 100 == 0:
+            print(
+                f"{offset}@{iter}: e{int(mpmath.log10(delta_P(P, Pnew)))}/{mpmath.mp.dps-3}"
+            )
         if delta_P(P, Pnew) < mpmath.mp.mpf(f"1e-{mpmath.mp.dps-3}"):
             converged = True
 
         if iter == maxiter:
             print("SCF NOT CONVERGED!", lval)
+            return offset, (iter, None, None, None)
 
         P = Pnew
 
         iter += 1
-    return offset, (iter, energy_el(P, F, Hc))
+    return offset, (iter, energy_el(P, F, Hc), E, P)
 
 
 def init_config(infile):
@@ -194,7 +198,7 @@ def main(infile, outfile):
     with mp.Pool(os.cpu_count()) as p:
         res = p.starmap(
             get_energy,
-            tqdm.tqdm(tasks, total=len(tasks), desc="Function evaluatons"),
+            tqdm.tqdm(tasks, total=len(tasks), desc="Function evaluations"),
             chunksize=1,
         )
 
@@ -204,9 +208,14 @@ def main(infile, outfile):
         offset, v = item
         if offset is None:
             offset = "target"
-        iter, v = v
-        config["singlepoints"][f"energy_{offset}"] = str(v)
+        iter, energy, mo_energy, dm = v
+        config["singlepoints"][f"energy_{offset}"] = str(energy)
         config["singlepoints"][f"iter_{offset}"] = str(iter)
+        for idx, mo in enumerate(mo_energy):
+            config["singlepoints"][f"moenergy_{offset}_{idx}"] = str(mo)
+        for idxA, dmA in enumerate(dm):
+            for idxB, dmE in enumerate(dmA):
+                config["singlepoints"][f"dm_{offset}_{idxA}_{idxB}"] = str(dmE)
 
     # store endpoints
     ref = res[0][1]
