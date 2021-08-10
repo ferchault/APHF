@@ -224,18 +224,12 @@ def main(infile, outfile):
     config["endpoints"]["reference"] = str(ref)
     config["endpoints"]["target"] = str(target)
 
-    # Taylor coefficients
-    config.add_section("coefficients")
-    for order in range(maxorder):
-        stencil = stencils[order]
-        coefficient = sum(
-            [
-                res[shift][1] * weight
-                for shift, weight in zip(stencil["offsets"], stencil["weights"])
-            ]
-        ) / step ** mpmath.mp.mpf(order)
-        coefficient /= mpmath.factorial(order)
-        config["coefficients"][f"order-{order}"] = str(coefficient)
+    # stencil
+    config.add_section("stencil")
+    for order, stencil in stencils.items():
+        for shift, weight in zip(stencil["offsets"], stencil["weights"]):
+            config["stencil"][f"order_{order}_{shift}"] = str(weight)
+
     with open(outfile, "w") as fh:
         config.write(fh)
 
