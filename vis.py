@@ -130,3 +130,33 @@ for orderhalf in range(2, 20):
 # %%
 plt.semilogy(o, np.abs(e))
 # %%
+def radius_of_convergence(coeffs):
+    bns = []
+    ns=[]
+    for n in range(3, len(coeffs)-1):
+        bn = coeffs[n+1]*coeffs[n-1] - coeffs[n]**2
+        bn /= coeffs[n]*coeffs[n-2] - coeffs[n-1]**2
+        bns.append(np.sqrt(bn))
+        ns.append(n)
+    plt.plot(1/np.array(ns), bns)
+radius_of_convergence(coeffs)
+# %%
+dx = 0.9
+xs = np.cumsum(coeffs*(dx**np.arange(len(coeffs))))
+plt.semilogy(abs(xs-xs[-3]))
+# %%
+ms = []
+es =[]
+for m in range(40):
+    p, q = pade(coeffs, m)
+    e = p(1) / q(1) - -2.63018671440529
+    ms.append(m)
+    es.append(e)
+# %%
+plt.semilogy(ms, np.abs(es))
+# %%
+p, q = pade(coeffs, 20)
+# %%
+xss = np.linspace(0, 2, 100)
+plt.plot(xss, p(xss)/q(xss))
+# %%
