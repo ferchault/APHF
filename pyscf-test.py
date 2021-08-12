@@ -53,12 +53,12 @@ def get_energy(lval):
 
         return mf
 
-    mol = gto.M(atom=f"H 0 0 0; H {1.4/1.8897259886} 0 0", basis="sto-3g", verbose=0)
+    mol = gto.M(atom=f"H 0 0 0; H {1.4/1.8897259886} 0 0", basis="def2-tzvp")
     calc = add_qmmm(scf.RHF(mol), mol, float(lval) * np.array((1, -1)))
     calc.kernel()
     return calc.energy_elec()[0]
 
-
+get_energy(0), get_energy(1)
 #%%
 import findiff
 import functools
@@ -98,7 +98,9 @@ taylor(get_energy, 0, 1, 8, 0.001)
 
 # %%
 # %%
-get_energy(1)
+get_energy(0), get_energy(1)
 
 
+# %%
+1.4/1.8897259886
 # %%

@@ -20,16 +20,18 @@ import scipy.misc as misc
 import scipy.special as spec
 import scipy.integrate as quad
 import mpmath
+import multiprocessing as mp
+import os
+import tqdm
+import itertools as it
 
 misc.factorial2 = spec.factorial2
 misc.comb = spec.comb
 misc.factorial = spec.factorial
 
 from basis import *
-import HF
 
 
-@HF.test_for_accurate_types
 def gaussian_product(aa, bb, Ra, Rb):
     """
     Gaussian produc theorem.
@@ -66,7 +68,6 @@ def gaussian_product(aa, bb, Ra, Rb):
     return R, c
 
 
-@HF.test_for_accurate_types
 def norm(ax, ay, az, aa):
     """
     General cartesian Gaussian normalization factor.
@@ -98,7 +99,6 @@ def norm(ax, ay, az, aa):
     return N
 
 
-@HF.test_for_accurate_types
 def Sxyz(a, b, aa, bb, Ra, Rb, R):
     """
     Compute overlap integral between two unnormalized Cartesian gaussian functions along one direction.
@@ -140,7 +140,6 @@ def Sxyz(a, b, aa, bb, Ra, Rb, R):
     return S
 
 
-@HF.test_for_accurate_types
 def overlap(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     """
     Compute overlap integral between two Cartesian gaussian functions.
@@ -185,7 +184,6 @@ def overlap(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     return S
 
 
-@HF.test_for_accurate_types
 def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     """
     Compute kinetic integral between two Cartesian gaussian functions.
@@ -213,7 +211,6 @@ def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
 
     R, c = gaussian_product(aa, bb, Ra, Rb)
 
-    @HF.test_for_accurate_types
     def Kxyz(ac, a1, a2, bc, b1, b2, aa, bb, Ra, Rb, Ra1, Rb1, Ra2, Rb2, Rc, R1, R2):
         """
         Compute kinetic integral between two Cartesian gaussian functions along one direction.
@@ -329,7 +326,6 @@ def kinetic(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb):
     return K
 
 
-@HF.test_for_accurate_types
 def f(j, l, m, a, b):
     """
     Expansion coefficient f.
@@ -355,7 +351,6 @@ def f(j, l, m, a, b):
     return f
 
 
-@HF.test_for_accurate_types
 def F(nu, x):
     """
     Boys function.
@@ -389,7 +384,6 @@ def F(nu, x):
     return ff
 
 
-@HF.test_for_accurate_types
 def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
     """
     Compute nuclear-electron interaction integrals.
@@ -479,7 +473,6 @@ def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
     return Vn
 
 
-@HF.test_for_accurate_types
 def electronic(
     ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz, aa, bb, cc, dd, Ra, Rb, Rc, Rd
 ):
@@ -525,7 +518,6 @@ def electronic(
 
     delta = mpmath.mp.mpf("1.0") / (4 * g1) + mpmath.mp.mpf("1.0") / (4 * g2)
 
-    @HF.test_for_accurate_types
     def theta(l, l1, l2, a, b, r, g):
         """
         Expansion coefficient theta.
@@ -544,7 +536,6 @@ def electronic(
 
         return t
 
-    @HF.test_for_accurate_types
     def B(l, ll, r, rr, i, l1, l2, Ra, Rb, Rp, g1, l3, l4, Rc, Rd, Rq, g2):
         """
         Expansion coefficient B.
@@ -720,6 +711,32 @@ def electronic(
 def EE_list(basis):
     """
     Multidimensional array of two-electron integrals.
+    INPUT:
+        BASIS: Basis set
+    OUTPUT:
+        EE: list of two-electron integrals, with indices (i,j,k,l)
+    """
+
+    # List of basis functions
+    B = basis.basis()
+
+    combos = [_ for _ in enumerate(B)]
+    with mp.Pool(os.cpu_count()) as pool:
+        results = list(
+            tqdm.tqdm(
+                pool.imap(
+                    do_one, [(mpmath.mp.dps, *_) for _ in it.product(combos, repeat=4)]
+                ),
+                total=len(combos) ** 4,
+                desc="2e integrals",
+            )
+        )
+    return results
+
+
+def do_one(parts):
+    """
+    Multidimensional array of two-electron integrals.
 
     INPUT:
         BASIS: Basis set
@@ -727,93 +744,73 @@ def EE_list(basis):
         EE: list of two-electron integrals, with indices (i,j,k,l)
     """
 
-    # Size of the basis set
-    K = basis.K
+    dps, p, q, r, s = parts
+    mpmath.mp.dps = dps
+    i, b1 = p
+    j, b2 = q
+    k, b3 = r
+    l, b4 = s
+    ret = mpmath.mpf("0.0")
 
-    # List of basis functions
-    B = basis.basis()
+    for a1, d1 in zip(b1["a"], b1["d"]):
+        for a2, d2 in zip(b2["a"], b2["d"]):
+            for a3, d3 in zip(b3["a"], b3["d"]):
+                for a4, d4 in zip(b4["a"], b4["d"]):
+                    # Basis functions centers
+                    R1 = b1["R"]
+                    R2 = b2["R"]
+                    R3 = b3["R"]
+                    R4 = b4["R"]
 
-    EE = np.array(mpmath.zeros(K ** 2).tolist()).reshape(K, K, K, K)
+                    # Basis functions angular momenta
+                    ax = b1["lx"]
+                    ay = b1["ly"]
+                    az = b1["lz"]
 
-    Nee = 0
+                    # Basis functions angular momenta
+                    bx = b2["lx"]
+                    by = b2["ly"]
+                    bz = b2["lz"]
 
-    for i, b1 in enumerate(B):
-        for j, b2 in enumerate(B):
-            for k, b3 in enumerate(B):
-                for l, b4 in enumerate(B):
+                    # Basis functions angular momenta
+                    cx = b3["lx"]
+                    cy = b3["ly"]
+                    cz = b3["lz"]
 
-                    Nee += 1
+                    # Basis functions angular momenta
+                    dx = b4["lx"]
+                    dy = b4["ly"]
+                    dz = b4["lz"]
 
-                    # Print update of calculation (can be long)
-                    if Nee % 500 == 0:
-                        print(
-                            "     Computed ",
-                            Nee,
-                            " two-electron integrals of ",
-                            K ** 4,
-                            ".",
-                            sep="",
-                        )
+                    tmp = 1
+                    tmp *= d1.conjugate() * d2.conjugate()
+                    tmp *= d3 * d4
+                    tmp *= electronic(
+                        ax,
+                        ay,
+                        az,
+                        bx,
+                        by,
+                        bz,
+                        cx,
+                        cy,
+                        cz,
+                        dx,
+                        dy,
+                        dz,
+                        a1,
+                        a2,
+                        a3,
+                        a4,
+                        R1,
+                        R2,
+                        R3,
+                        R4,
+                    )
 
-                    for a1, d1 in zip(b1["a"], b1["d"]):
-                        for a2, d2 in zip(b2["a"], b2["d"]):
-                            for a3, d3 in zip(b3["a"], b3["d"]):
-                                for a4, d4 in zip(b4["a"], b4["d"]):
-                                    # Basis functions centers
-                                    R1 = b1["R"]
-                                    R2 = b2["R"]
-                                    R3 = b3["R"]
-                                    R4 = b4["R"]
+                    ret += tmp
 
-                                    # Basis functions angular momenta
-                                    ax = b1["lx"]
-                                    ay = b1["ly"]
-                                    az = b1["lz"]
-
-                                    # Basis functions angular momenta
-                                    bx = b2["lx"]
-                                    by = b2["ly"]
-                                    bz = b2["lz"]
-
-                                    # Basis functions angular momenta
-                                    cx = b3["lx"]
-                                    cy = b3["ly"]
-                                    cz = b3["lz"]
-
-                                    # Basis functions angular momenta
-                                    dx = b4["lx"]
-                                    dy = b4["ly"]
-                                    dz = b4["lz"]
-
-                                    tmp = 1
-                                    tmp *= d1.conjugate() * d2.conjugate()
-                                    tmp *= d3 * d4
-                                    tmp *= electronic(
-                                        ax,
-                                        ay,
-                                        az,
-                                        bx,
-                                        by,
-                                        bz,
-                                        cx,
-                                        cy,
-                                        cz,
-                                        dx,
-                                        dy,
-                                        dz,
-                                        a1,
-                                        a2,
-                                        a3,
-                                        a4,
-                                        R1,
-                                        R2,
-                                        R3,
-                                        R4,
-                                    )
-
-                                    EE[i, j, k, l] += tmp
-
-    return EE
+    return i, j, k, l, ret
 
 
 def print_EE_list(ee):

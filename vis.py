@@ -1,4 +1,5 @@
 #%%
+from itertools import accumulate
 from HF import get_energy
 import matplotlib.pyplot as plt
 import numpy as np
@@ -159,4 +160,39 @@ p, q = pade(coeffs, 20)
 # %%
 xss = np.linspace(0, 2, 100)
 plt.plot(xss, p(xss)/q(xss))
+import configparser
+
+# %%
+def get_coeffs(fn):
+    config = configparser.ConfigParser()
+    with open(fn) as fh:
+        config.read_file(fh)
+    coefficients = []
+    for order in range(config["meta"].getint("orders")):
+        coeff = float(config["coefficients"][f"order-{order}"])
+        coefficients.append(coeff)
+    return np.array(coefficients), float(config["singlepoints"]["energy_target"])
+
+
+accurate, atarget = get_coeffs("accurate-H2.out")
+veryaccurate, vatarget = get_coeffs("very-accurate-H2.out")
+# %%
+def padesplit(coeffs):
+    orders = []
+    estimates = []
+    for order in range(0, len(coeffs)):
+        try:
+            p, q = pade(coeffs[:order], int(order / 2))
+        except:
+            continue
+
+        orders.append(order)
+        estimates.append(p(1) / q(1))
+    return orders, np.array(estimates)
+
+
+os, es = padesplit(accurate)
+plt.semilogy(abs(es - atarget))
+os, es = padesplit(veryaccurate)
+plt.semilogy(abs(es - vatarget))
 # %%

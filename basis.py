@@ -23,10 +23,9 @@ class Atom:
     Class representing an atom.
     """
 
-    def __init__(self, name, R, Z, orbitals, Zeff=None):
+    def __init__(self, name, R, Z, basisZ):
         """
         Initializer for ATOM
-
         INPUT:
             NAME: Name of the element
             R: Position (cartesian coordinates, atomic units)
@@ -36,12 +35,77 @@ class Atom:
 
         self.name = name
         self.R = R
-        self.orbitals = orbitals
         self.Z = Z
-        if Zeff is None:
-            self.Zeff = Z
-        else:
-            self.Zeff = Zeff
+        self.basisZ = basisZ
+
+
+class Basis:
+    def __init__(self, basisset, atoms):
+        self._basis = []
+        for atom in atoms:
+            db = bse.get_basis(basisset, int(atom.basisZ))
+
+            db = db["elements"][str(int(atom.basisZ))]["electron_shells"]
+
+            for shell in db:
+                if shell["function_type"] != "gto":
+                    raise ValueError()
+
+                a = [mpmath.mpf(_) for _ in shell["exponents"]]
+                for angmom, coeffs in zip(
+                    shell["angular_momentum"], shell["coefficients"]
+                ):
+                    if angmom > 1:
+                        raise ValueError()
+
+                    d = [mpmath.mpf(_) for _ in coeffs]
+                    if angmom == 0:
+                        self._basis.append(
+                            {
+                                "R": atom.R,  #
+                                "lx": 0,  #
+                                "ly": 0,  #
+                                "lz": 0,  #
+                                "a": a,  #
+                                "d": d,
+                            }
+                        )
+                    if angmom == 1:
+                        self._basis.append(
+                            {
+                                "R": atom.R,  #
+                                "lx": 1,  #
+                                "ly": 0,  #
+                                "lz": 0,  #
+                                "a": a,  #
+                                "d": d,
+                            }
+                        )
+                        self._basis.append(
+                            {
+                                "R": atom.R,  #
+                                "lx": 0,  #
+                                "ly": 1,  #
+                                "lz": 0,  #
+                                "a": a,  #
+                                "d": d,
+                            }
+                        )
+                        self._basis.append(
+                            {
+                                "R": atom.R,  #
+                                "lx": 0,  #
+                                "ly": 0,  #
+                                "lz": 1,  #
+                                "a": a,  #
+                                "d": d,
+                            }
+                        )
+
+        self.K = len(self._basis)
+
+    def basis(self):
+        return self._basis
 
 
 class STO3G:
@@ -66,7 +130,7 @@ class STO3G:
 
         # Exponential coefficients for the Gaussian orbitals
         self.zeta1 = {
-            "H": TO_PREC("1.24"),
+            "H": mpmath.mp.mpf("1.24"),
             "He": 2.0925,
             "Li": 2.69,
             "Be": 3.68,
@@ -91,12 +155,18 @@ class STO3G:
         for a in atoms:  # For every atom
             for o in a.orbitals:  # For every atomic orbital
                 if o == "1s":
-                    a1 = TO_PREC("0.109818") * self.zeta1[a.name] ** TO_PREC("2")
-                    a2 = TO_PREC("0.405771") * self.zeta1[a.name] ** TO_PREC("2")
-                    a3 = TO_PREC("2.22766") * self.zeta1[a.name] ** TO_PREC("2")
-                    d1 = TO_PREC("0.444635")
-                    d2 = TO_PREC("0.535328")
-                    d3 = TO_PREC("0.154329")
+                    a1 = mpmath.mp.mpf("0.109818") * self.zeta1[
+                        a.name
+                    ] ** mpmath.mp.mpf("2")
+                    a2 = mpmath.mp.mpf("0.405771") * self.zeta1[
+                        a.name
+                    ] ** mpmath.mp.mpf("2")
+                    a3 = mpmath.mp.mpf("2.22766") * self.zeta1[a.name] ** mpmath.mp.mpf(
+                        "2"
+                    )
+                    d1 = mpmath.mp.mpf("0.444635")
+                    d2 = mpmath.mp.mpf("0.535328")
+                    d3 = mpmath.mp.mpf("0.154329")
 
                     self.STO3G.append(
                         {

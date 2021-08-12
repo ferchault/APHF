@@ -15,36 +15,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
-def test_for_accurate_types(func):
-    def wrapper(*args, **kwargs):
-        def is_accurate(variable):
-            return True
-            if type(variable) == tuple:
-                for e in variable:
-                    if not is_accurate(e):
-                        return False
-                return True
-            elif type(variable) == np.ndarray:
-                if len(variable.shape) == 0:
-                    return True
-                return is_accurate(variable[0])
-            else:
-                return type(variable).__name__ == "mpf" or type(variable) == int
-
-        for variable in args:
-            assert is_accurate(variable)
-        for k, v in kwargs:
-            assert is_accurate(v)
-        retval = func(*args, **kwargs)
-        if not is_accurate(retval):
-            print(type(retval))
-        assert is_accurate(retval)
-        return retval
-
-    return wrapper
-
-
+import sys
+import functools
+import findiff
+import subprocess
+import hashlib
+import configparser
+import multiprocessing as mp
+import os
+import click
+import basis_set_exchange as bse
+import pickle
 from numpy.lib.arraysetops import isin
 from RHF import *
 
@@ -59,99 +40,6 @@ import mpmath
 mpmath.mp.dps = 100
 
 
-class CarefulFloat(mpmath.mpf):
-    @staticmethod
-    def _is_careful(other):
-        return type(other).__name__ in ("CarefulFloat", "mpf")
-
-    @staticmethod
-    def _accept_operator(other):
-        if CarefulFloat._is_careful(other):
-            return True
-
-        if isinstance(other, np.ndarray) and CarefulFloat._is_careful(
-            other.reshape(-1)[0]
-        ):
-            return True
-
-        return False
-
-    def __add__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__add__(self, other)
-
-    def __radd__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__radd__(self, other)
-
-    def __sub__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__sub__(self, other)
-
-    def __rsub__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__rsub__(mpmath.mpf(self), other)
-
-    def __mul__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__mul__(self, other)
-
-    def __rmul__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__rmul__(self, other)
-
-    def __div__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__div__(self, other)
-
-    def __rdiv__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__rdiv__(self, other)
-
-    def __mod__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__mod__(self, other)
-
-    def __rmod__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__rmod__(self, other)
-
-    def __pow__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__pow__(self, other)
-
-    def __rpow__(self, other):
-        if not CarefulFloat._accept_operator(other):
-            raise ValueError("Invalid op")
-
-        return mpmath.mpf.__rpow__(self, other)
-
-
-TO_PREC = mpmath.mp.mpf
-
-
 def NP2MP(array):
     return mpmath.mp.matrix(array.tolist())
 
@@ -163,155 +51,188 @@ def MP2NP(array):
 ###########################
 ###########################
 ###########################
+@functools.lru_cache(maxsize=1)
+def get_ee(cachename):
+    with open(cachename + "-ee.cache", "rb") as fh:
+        results = pickle.load(fh)
+    K = 0
+    for result in results:
+        i, j, k, l, E = result
+        K = max(K, max(i, j, k, l))
+    K = K + 1
+    EE = mpmath.matrix(K, K, K, K)
+    for result in results:
+        i, j, k, l, E = result
+        EE[i, j, k, l] = E
+
+    return EE
 
 
-def get_energy(lval):
-    mol = [
-        Atom(
-            "H",
-            (TO_PREC("0"), TO_PREC("0"), TO_PREC("0")),
-            TO_PREC("1"),
-            ["1s"],
-            TO_PREC("1") + lval,
-        ),
-        Atom(
-            "H",
-            (TO_PREC("0"), TO_PREC("0"), TO_PREC("1.4")),
-            TO_PREC("1"),
-            ["1s"],
-            TO_PREC("1") - lval,
-        ),
-    ]
-    bs = STO3G(mol)
-    N = 2
+def get_energy(config, offset, lval):
+    mpmath.mp.dps = config["meta"].getint("dps")
+
+    step = mpmath.mpf(f'1e-{config["meta"].getint("deltalambda")}')
+    if lval is None:
+        lval = step * offset
+
+    mol, bs, N = build_system(config, lval)
+    ee = get_ee(config["meta"]["cache"])
+    K = bs.K
+    S = S_overlap(bs)
+    X = X_transform(S)
+    Hc = H_core(bs, mol)
 
     maxiter = 100000  # Maximal number of iteration
 
-    verbose = False  # Print each SCF step
-
-    ###########################
-    ###########################
-    ###########################
-
-    # Basis set size
-    K = bs.K
-
-    if verbose:
-        print("Computing overlap matrix S...")
-    S = S_overlap(bs)
-
-    if verbose:
-        print(S)
-
-    if verbose:
-        print("Computing orthogonalization matrix X...")
-    X = X_transform(S)
-
-    if verbose:
-        print(X)
-
-    if verbose:
-        print("Computing core Hamiltonian...")
-    Hc = H_core(bs, mol)
-
-    if verbose:
-        print(Hc)
-
-    if verbose:
-        print("Computing two-electron integrals...")
-    ee = EE_list(bs)
-
-    if verbose:
-        print_EE_list(ee)
-
-    Pnew = np.zeros((K, K))
-    P = np.zeros((K, K))
+    Pnew = np.array(mpmath.zeros(K, K).tolist())
+    P = np.array(mpmath.zeros(K, K).tolist())
 
     converged = False
 
-    if verbose:
-        print("   ##################")
-        print("   Starting SCF cycle")
-        print("   ##################")
-
     iter = 1
     while not converged and iter <= maxiter:
-        Pnew, F, E = RHF_step(bs, mol, N, Hc, X, P, ee, verbose)  # Perform an SCF step
+        Pnew, F, E = RHF_step(bs, mol, N, Hc, X, P, ee, False)  # Perform an SCF step
 
         # Check convergence of the SCF cycle
         Pnew = (P + Pnew) / 2
 
         # print(Pnew)
-        # print(iter, delta_P(P, Pnew))
-        if delta_P(P, Pnew) < TO_PREC(f"1e-{mpmath.mp.dps-3}"):
+        if iter % 100 == 0:
+            print(
+                f"{offset}@{iter}: e{int(mpmath.log10(delta_P(P, Pnew)))}/{mpmath.mp.dps-3}"
+            )
+        if delta_P(P, Pnew) < mpmath.mp.mpf(f"1e-{mpmath.mp.dps-3}"):
             converged = True
 
         if iter == maxiter:
             print("SCF NOT CONVERGED!", lval)
+            return offset, (iter, None, None, None)
 
         P = Pnew
 
         iter += 1
-    return energy_el(P, F, Hc)
+    return offset, (iter, energy_el(P, F, Hc), E, P)
+
+
+def init_config(infile):
+    config = configparser.ConfigParser()
+    with open(infile) as fh:
+        config.read_file(fh)
+    with open(infile, "rb") as fh:
+        config["meta"]["cache"] = hashlib.sha256(fh.read()).hexdigest()
+    return config
+
+
+def cache_EE_integrals(config):
+    cachename = config["meta"]["cache"] + "-ee.cache"
+    if os.path.exists(cachename):
+        return
+    mol, bs, N = build_system(config, 0)
+    ee = EE_list(bs)
+    with open(cachename, "wb") as fh:
+        pickle.dump(ee, fh)
+
+
+def build_system(config, lval):
+    reference_Zs = config["meta"]["reference"].strip().split()
+    basis_Zs = config["meta"]["basis"].strip().split()
+    target_Zs = config["meta"]["target"].strip().split()
+    coords = config["meta"]["coords"].strip().split("\n")
+
+    mol = []
+
+    N = 0
+    for ref, tar, bas, coord in zip(reference_Zs, target_Zs, basis_Zs, coords):
+        N += int(ref)
+        element = bse.lut.element_data_from_Z(int(bas))[0].capitalize()
+        Z = mpmath.mpf(tar) * lval + (1 - lval) * mpmath.mpf(ref)
+        atom = Atom(element, tuple([mpmath.mpf(_) for _ in coord.split()]), Z, bas)
+        mol.append(atom)
+    bs = Basis(config["meta"]["basisset"], mol)
+
+    return mol, bs, N
+
+
+def get_stencils(maxorder):
+    stencils = {}
+    for order in tqdm.tqdm(range(maxorder), desc="Build stencil"):
+        if order == 0:
+            weights = np.array([mpmath.mp.mpf("1.0")])
+            offsets = np.array([1])
+        else:
+            lookup = findiff.coefficients(deriv=order, acc=2, symbolic=True)["center"]
+            weights = [
+                mpmath.mp.mpf(_.numerator()) / mpmath.mp.mpf(_.denominator())
+                for _ in lookup["coefficients"]
+            ]
+            offsets = lookup["offsets"]
+        stencils[order] = {"weights": weights, "offsets": offsets}
+    return stencils
+
+
+@click.command()
+@click.argument("infile")
+@click.argument("outfile")
+def main(infile, outfile):
+    config = init_config(infile)
+    mp.set_start_method("spawn")
+    mpmath.mp.dps = config["meta"].getint("dps")
+    config["meta"]["revision"] = (
+        subprocess.check_output("git rev-parse HEAD".split()).decode("ascii").strip()
+    )
+
+    # caching
+    cache_EE_integrals(config)
+
+    # find work
+    maxorder = config["meta"].getint("orders")
+    stencils = get_stencils(maxorder)
+    offsets = set(
+        sum([list(stencil["offsets"]) for order, stencil in stencils.items()], [])
+    )
+    step = mpmath.mpf(f'1e-{config["meta"].getint("deltalambda")}')
+    tasks = [(config, _, None) for _ in offsets]
+    tasks += [(config, None, mpmath.mpf("1.0"))]
+
+    # evaluate
+    with mp.Pool(os.cpu_count()) as p:
+        res = p.starmap(
+            get_energy,
+            tqdm.tqdm(tasks, total=len(tasks), desc="Function evaluations"),
+            chunksize=1,
+        )
+
+    res = dict(res)
+    config.add_section("singlepoints")
+    for c, item in enumerate(res.items()):
+        offset, v = item
+        if offset is None:
+            offset = "target"
+        iter, energy, mo_energy, dm = v
+        config["singlepoints"][f"energy_{offset}"] = str(energy)
+        config["singlepoints"][f"iter_{offset}"] = str(iter)
+        for idx, mo in enumerate(mo_energy):
+            config["singlepoints"][f"moenergy_{offset}_{idx}"] = str(mo)
+        for idxA, dmA in enumerate(dm):
+            for idxB, dmE in enumerate(dmA):
+                config["singlepoints"][f"dm_{offset}_{idxA}_{idxB}"] = str(dmE)
+
+    # store endpoints
+    ref = res[0][1]
+    target = res[None][1]
+    config.add_section("endpoints")
+    config["endpoints"]["reference"] = str(ref)
+    config["endpoints"]["target"] = str(target)
+
+    # stencil
+    config.add_section("stencil")
+    for order, stencil in stencils.items():
+        for shift, weight in zip(stencil["offsets"], stencil["weights"]):
+            config["stencil"][f"order_{order}_{shift}"] = str(weight)
+
+    with open(outfile, "w") as fh:
+        config.write(fh)
 
 
 if __name__ == "__main__":
-    import sys
-    import functools
-    import findiff
-    import subprocess
-
-    print(
-        "REVISION",
-        subprocess.check_output("git rev-parse HEAD".split()).decode("ascii").strip(),
-    )
-    print("DPS", mpmath.mp.dps)
-
-    initial = get_energy(TO_PREC("0"))
-    final = get_energy(TO_PREC("1"))
-    print("INITIAL", initial)
-    print("FINAL", final)
-
-    print("order, total, coefficient, error")
-
-    def taylor(func, around, at, orders, delta):
-        @functools.lru_cache(maxsize=100)
-        def callfunc(lval):
-            return func(lval)
-
-        def format(val):
-            return mpmath.nstr(val, 10, strip_zeros=False)
-
-        total = TO_PREC("0.0")
-        final = callfunc(at)
-        for order in range(orders):
-            if order == 0:
-                weights = np.array([TO_PREC("1.0")])
-                offsets = np.array([TO_PREC("0.0")])
-            else:
-                stencil = findiff.coefficients(deriv=order, acc=2, symbolic=True)[
-                    "center"
-                ]
-                weights = [
-                    TO_PREC(_.numerator()) / TO_PREC(_.denominator())
-                    for _ in stencil["coefficients"]
-                ]
-                offsets = stencil["offsets"]
-            coefficient = sum(
-                [
-                    callfunc(around + delta * shift) * weight
-                    for shift, weight in zip(offsets, weights)
-                ]
-            ) / delta ** TO_PREC(order)
-            coefficient *= (at - around) ** TO_PREC(order) / mpmath.factorial(order)
-            total += coefficient
-            print(order, format(total), format(coefficient), format(total - final))
-
-    # taylor(get_energy, TO_PREC("0."), TO_PREC("1."), 20, TO_PREC("1e-10"))
-    coeffs = mpmath.taylor(get_energy, TO_PREC("0.0"), 15, method="step", direction=0)
-    total = TO_PREC("0.0")
-    def format(val):
-        return mpmath.nstr(val, 10, strip_zeros=False)
-    for order, coeff in enumerate(coeffs):
-        total += coeff
-        print (order, format(total), format(coeff), format(total-final))
+    main()
