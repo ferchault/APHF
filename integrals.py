@@ -22,6 +22,7 @@ import scipy.integrate as quad
 import mpmath
 import multiprocessing as mp
 import os
+import functools
 import tqdm
 import itertools as it
 
@@ -57,17 +58,19 @@ def gaussian_product(aa, bb, Ra, Rb):
     Rb = np.asarray(Rb)
 
     # Compute Gaussian product center
-
-    R = (aa * Ra + bb * Rb) / (aa + bb)
+    q = aa + bb
+    R = (aa * Ra + bb * Rb) / q
 
     # Compute Gaussian product coefficient
-    c = np.dot(Ra - Rb, Ra - Rb)
-    c *= -aa * bb / (aa + bb)
+    d = Ra - Rb
+    c = np.dot(d, d)
+    c *= -aa * bb / q
     c = np.vectorize(mpmath.mp.exp)(c)
 
     return R, c
 
 
+@functools.lru_cache(maxsize=1000)
 def norm(ax, ay, az, aa):
     """
     General cartesian Gaussian normalization factor.
@@ -760,38 +763,35 @@ def do_one(parts):
     ret = mpmath.mpf("0.0")
 
     for a1, d1 in zip(b1["a"], b1["d"]):
+        # Basis functions centers
+        R1 = b1["R"]
+
+        # Basis functions angular momenta
+        ax = b1["lx"]
+        ay = b1["ly"]
+        az = b1["lz"]
+
         for a2, d2 in zip(b2["a"], b2["d"]):
+            R2 = b2["R"]
+            bx = b2["lx"]
+            by = b2["ly"]
+            bz = b2["lz"]
+
+            qq = d1.conjugate() * d2.conjugate()
             for a3, d3 in zip(b3["a"], b3["d"]):
+                R3 = b3["R"]
+                cx = b3["lx"]
+                cy = b3["ly"]
+                cz = b3["lz"]
+
+                qqq = qq * d3
                 for a4, d4 in zip(b4["a"], b4["d"]):
-                    # Basis functions centers
-                    R1 = b1["R"]
-                    R2 = b2["R"]
-                    R3 = b3["R"]
                     R4 = b4["R"]
-
-                    # Basis functions angular momenta
-                    ax = b1["lx"]
-                    ay = b1["ly"]
-                    az = b1["lz"]
-
-                    # Basis functions angular momenta
-                    bx = b2["lx"]
-                    by = b2["ly"]
-                    bz = b2["lz"]
-
-                    # Basis functions angular momenta
-                    cx = b3["lx"]
-                    cy = b3["ly"]
-                    cz = b3["lz"]
-
-                    # Basis functions angular momenta
                     dx = b4["lx"]
                     dy = b4["ly"]
                     dz = b4["lz"]
 
-                    tmp = 1
-                    tmp *= d1.conjugate() * d2.conjugate()
-                    tmp *= d3 * d4
+                    tmp = qqq * d4
                     tmp *= electronic(
                         ax,
                         ay,
