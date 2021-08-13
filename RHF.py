@@ -21,7 +21,7 @@ import numpy.linalg as la
 import mpmath
 
 
-def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
+def RHF_step(basis, molecule, N, H, X, P_old, ee, G_ee_cache, verbose=False):
     """
     Restricted Hartree-Fock self-consistent field setp.
 
@@ -40,7 +40,7 @@ def RHF_step(basis, molecule, N, H, X, P_old, ee, verbose=False):
         print("\nDensity matrix P:")
         print(P_old)
 
-    G = G_ee(basis, molecule, P_old, ee)  # Compute electron-electron interaction matrix
+    G = G_ee(basis, G_ee_cache, P_old)  # Compute electron-electron interaction matrix
 
     if verbose:
         print("\nG matrix:")

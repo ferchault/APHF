@@ -78,6 +78,7 @@ def get_energy(config, offset, lval):
     mol, bs, N = build_system(config, lval)
     ee = get_ee(config["meta"]["cache"])
     K = bs.K
+    Gfactor = G_ee_cache(K, ee)
     S = S_overlap(bs)
     X = X_transform(S)
     Hc = H_core(bs, mol)
@@ -91,7 +92,9 @@ def get_energy(config, offset, lval):
 
     iter = 1
     while not converged and iter <= maxiter:
-        Pnew, F, E = RHF_step(bs, mol, N, Hc, X, P, ee, False)  # Perform an SCF step
+        Pnew, F, E = RHF_step(
+            bs, mol, N, Hc, X, P, ee, Gfactor, False
+        )  # Perform an SCF step
 
         # Check convergence of the SCF cycle
         Pnew = (P + Pnew) / 2

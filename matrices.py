@@ -252,13 +252,23 @@ def P_density(C, N):
     return P
 
 
-def G_ee(basis, molecule, P, ee):
+def G_ee_cache(K, ee):
+    Gfactor = mpmath.matrix(K, K, K, K)
+    q = mpmath.mp.mpf("0.5")
+    for i in range(K):
+        for j in range(K):
+            for k in range(K):
+                for l in range(K):
+                    Gfactor[i, j, k, l] = ee[i, j, k, l] - q * ee[i, l, k, j]
+    return Gfactor
+
+
+def G_ee(basis, Gfactor, P):
     """
     Compute core Hamiltonian matrix.
 
     INPUT:
         BASIS: Basis set.
-        MOLECULE: Collection of atoms
         P: Density matrix
         EE: Two-electron integrals
     OUTPUT:
@@ -272,7 +282,7 @@ def G_ee(basis, molecule, P, ee):
 
     q = mpmath.mp.mpf("0.5")
     for i, j, k, l in it.product(range(K), repeat=4):
-        G[i, j] += P[k, l] * (ee[i, j, k, l] - q * ee[i, l, k, j])
+        G[i, j] += P[k, l] * Gfactor[i, j, k, l]
 
     return G
 
