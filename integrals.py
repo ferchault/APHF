@@ -708,7 +708,7 @@ def electronic(
     return G
 
 
-def EE_list(basis):
+def EE_list(basis, single_core):
     """
     Multidimensional array of two-electron integrals.
     INPUT:
@@ -721,16 +721,23 @@ def EE_list(basis):
     B = basis.basis()
 
     combos = [_ for _ in enumerate(B)]
-    with mp.Pool(os.cpu_count()) as pool:
-        results = list(
-            tqdm.tqdm(
-                pool.imap(
-                    do_one, [(mpmath.mp.dps, *_) for _ in it.product(combos, repeat=4)]
-                ),
-                total=len(combos) ** 4,
-                desc="2e integrals",
+    if single_core:
+        results = [
+            do_one((mpmath.mp.dps, *_))
+            for _ in tqdm.tqdm(it.product(combos, repeat=4), total=len(combos) ** 4)
+        ]
+    else:
+        with mp.Pool(os.cpu_count()) as pool:
+            results = list(
+                tqdm.tqdm(
+                    pool.imap(
+                        do_one,
+                        [(mpmath.mp.dps, *_) for _ in it.product(combos, repeat=4)],
+                    ),
+                    total=len(combos) ** 4,
+                    desc="2e integrals",
+                )
             )
-        )
     return results
 
 

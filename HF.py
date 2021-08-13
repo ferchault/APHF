@@ -123,12 +123,12 @@ def init_config(infile):
     return config
 
 
-def cache_EE_integrals(config):
+def cache_EE_integrals(config, single_core):
     cachename = config["meta"]["cache"] + "-ee.cache"
     if os.path.exists(cachename):
         return
     mol, bs, N = build_system(config, 0)
-    ee = EE_list(bs)
+    ee = EE_list(bs, single_core)
     with open(cachename, "wb") as fh:
         pickle.dump(ee, fh)
 
@@ -158,7 +158,7 @@ def get_stencils(maxorder):
     for order in tqdm.tqdm(range(maxorder), desc="Build stencil"):
         if order == 0:
             weights = np.array([mpmath.mp.mpf("1.0")])
-            offsets = np.array([1])
+            offsets = np.array([0])
         else:
             lookup = findiff.coefficients(deriv=order, acc=2, symbolic=True)["center"]
             weights = [
@@ -182,7 +182,8 @@ def main(infile, outfile):
     )
 
     # caching
-    cache_EE_integrals(config)
+    single_core = True
+    cache_EE_integrals(config, single_core)
 
     # find work
     maxorder = config["meta"].getint("orders")
@@ -195,12 +196,15 @@ def main(infile, outfile):
     tasks += [(config, None, mpmath.mpf("1.0"))]
 
     # evaluate
-    with mp.Pool(os.cpu_count()) as p:
-        res = p.starmap(
-            get_energy,
-            tqdm.tqdm(tasks, total=len(tasks), desc="Function evaluations"),
-            chunksize=1,
-        )
+    if single_core:
+        res = [get_energy(*_) for _ in tasks]
+    else:
+        with mp.Pool(os.cpu_count()) as p:
+            res = p.starmap(
+                get_energy,
+                tqdm.tqdm(tasks, total=len(tasks), desc="Function evaluations"),
+                chunksize=1,
+            )
 
     res = dict(res)
     config.add_section("singlepoints")
