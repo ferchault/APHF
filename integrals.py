@@ -26,6 +26,8 @@ import functools
 import tqdm
 import itertools as it
 
+from basis import *
+
 
 @functools.lru_cache(maxsize=1000)
 def cached_factorial(n, exact=True):
@@ -40,8 +42,6 @@ def cached_factorial2(n, exact=True):
 misc.factorial2 = cached_factorial2
 misc.comb = spec.comb
 misc.factorial = cached_factorial
-
-from basis import *
 
 
 def gaussian_product(aa, bb, Ra, Rb):
@@ -351,7 +351,7 @@ def f(j, l, m, a, b):
         1998
     """
 
-    f = mpmath.mp.mpf("0.0")
+    f = 0
 
     for k in range(max(0, j - m), min(j, l) + 1):
         tmp = 1
@@ -363,6 +363,11 @@ def f(j, l, m, a, b):
         f += tmp
 
     return f
+
+
+ONEHALF = mpmath.mp.mpf("0.5")
+ZERO = mpmath.mp.mpf("0.0")
+ONE = mpmath.mp.mpf("1.0")
 
 
 def F(nu, x):
@@ -383,14 +388,14 @@ def F(nu, x):
         2006
     """
 
-    if x == mpmath.mp.mpf("0.0"):  # x < 1e-8:
+    if x == ZERO:  # x < 1e-8:
         # Taylor expansion for argument close or equal to zero (avoid division by zero)
-        ff = mpmath.mp.mpf("1.0") / (2 * nu + 1)
+        ff = ONE / (2 * nu + 1)
     else:
         # Evaluate Boys function with incomplete and complete Gamma functions
         ff = (
-            mpmath.mp.mpf("0.5")
-            / x ** (nu + mpmath.mp.mpf("0.5"))
+            ONEHALF
+            / x ** (nu + ONEHALF)
             * mpmath.gamma(nu + 0.5)
             * mpmath.gammainc(nu + 0.5, 0, x, regularized=True)
         )
@@ -420,11 +425,11 @@ def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
         1998
     """
 
-    Vn = mpmath.mp.mpf("0.0")
+    Vn = ZERO
 
     # Intermediate variable
     g = aa + bb
-    eps = mpmath.mp.mpf("1.0") / (4 * g)
+    eps = ONE / (4 * g)
 
     Rp, c = gaussian_product(aa, bb, Ra, Rb)  # Gaussian product
 
@@ -543,7 +548,7 @@ def electronic(
             http://spider.shef.ac.uk/
     """
 
-    G = mpmath.mp.mpf("0.0")
+    G = ZERO
 
     # Intermediate variable
     g1 = aa + bb
@@ -551,7 +556,7 @@ def electronic(
 
     # Compute gaussian products
 
-    delta = mpmath.mp.mpf("1.0") / (4 * g1) + mpmath.mp.mpf("1.0") / (4 * g2)
+    delta = ONE / (4 * g1) + ONE / (4 * g2)
 
     def theta(l, l1, l2, a, b, r, g):
         """
@@ -711,12 +716,7 @@ def electronic(
                                                                     np.dot(
                                                                         Rp - Rq, Rp - Rq
                                                                     )
-                                                                    / (
-                                                                        mpmath.mp.mpf(
-                                                                            "4.0"
-                                                                        )
-                                                                        * delta
-                                                                    ),
+                                                                    / (4 * delta),
                                                                 )
 
                                                                 G += Bx * By * Bz * ff
@@ -792,7 +792,7 @@ def do_one(parts):
     j, b2 = q
     k, b3 = r
     l, b4 = s
-    ret = mpmath.mpf("0.0")
+    ret = ZERO
 
     # Basis functions centers
     R1 = b1["R"]

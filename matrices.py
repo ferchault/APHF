@@ -270,13 +270,9 @@ def G_ee(basis, molecule, P, ee):
 
     G = np.array(mpmath.zeros(K, K).tolist())
 
-    for i in range(K):
-        for j in range(K):
-            for k in range(K):
-                for l in range(K):
-                    G[i, j] += P[k, l] * (
-                        ee[i, j, k, l] - mpmath.mp.mpf("0.5") * ee[i, l, k, j]
-                    )
+    q = mpmath.mp.mpf("0.5")
+    for i, j, k, l in it.product(range(K), repeat=4):
+        G[i, j] += P[k, l] * (ee[i, j, k, l] - q * ee[i, l, k, j])
 
     return G
 
