@@ -26,9 +26,20 @@ import functools
 import tqdm
 import itertools as it
 
-misc.factorial2 = spec.factorial2
+
+@functools.lru_cache(maxsize=1000)
+def cached_factorial(n, exact=True):
+    return spec.factorial(n, exact)
+
+
+@functools.lru_cache(maxsize=1000)
+def cached_factorial2(n, exact=True):
+    return spec.factorial2(n, exact)
+
+
+misc.factorial2 = cached_factorial2
 misc.comb = spec.comb
-misc.factorial = spec.factorial
+misc.factorial = cached_factorial
 
 from basis import *
 
@@ -477,7 +488,30 @@ def nuclear(ax, ay, az, bx, by, bz, aa, bb, Ra, Rb, Rn, Zn):
 
 
 def electronic(
-    ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz, aa, bb, cc, dd, Ra, Rb, Rc, Rd
+    ax,
+    ay,
+    az,
+    bx,
+    by,
+    bz,
+    cx,
+    cy,
+    cz,
+    dx,
+    dy,
+    dz,
+    aa,
+    bb,
+    cc,
+    dd,
+    Ra,
+    Rb,
+    Rc,
+    Rd,
+    Rp,
+    c1,
+    Rq,
+    c2,
 ):
     """
     Compute electron-electron interaction integrals.
@@ -516,8 +550,6 @@ def electronic(
     g2 = cc + dd
 
     # Compute gaussian products
-    Rp, c1 = gaussian_product(aa, bb, Ra, Rb)
-    Rq, c2 = gaussian_product(cc, dd, Rc, Rd)
 
     delta = mpmath.mp.mpf("1.0") / (4 * g1) + mpmath.mp.mpf("1.0") / (4 * g2)
 
@@ -762,36 +794,39 @@ def do_one(parts):
     l, b4 = s
     ret = mpmath.mpf("0.0")
 
+    # Basis functions centers
+    R1 = b1["R"]
+    R2 = b2["R"]
+    R3 = b3["R"]
+    R4 = b4["R"]
+
+    # Basis functions angular momenta
+    ax = b1["lx"]
+    ay = b1["ly"]
+    az = b1["lz"]
+    bx = b2["lx"]
+    by = b2["ly"]
+    bz = b2["lz"]
+    cx = b3["lx"]
+    cy = b3["ly"]
+    cz = b3["lz"]
+    dx = b4["lx"]
+    dy = b4["ly"]
+    dz = b4["lz"]
+
     for a1, d1 in zip(b1["a"], b1["d"]):
-        # Basis functions centers
-        R1 = b1["R"]
-
-        # Basis functions angular momenta
-        ax = b1["lx"]
-        ay = b1["ly"]
-        az = b1["lz"]
-
         for a2, d2 in zip(b2["a"], b2["d"]):
-            R2 = b2["R"]
-            bx = b2["lx"]
-            by = b2["ly"]
-            bz = b2["lz"]
-
+            Rp, c1 = gaussian_product(a1, a2, R1, R2)
             qq = d1.conjugate() * d2.conjugate()
+
             for a3, d3 in zip(b3["a"], b3["d"]):
-                R3 = b3["R"]
-                cx = b3["lx"]
-                cy = b3["ly"]
-                cz = b3["lz"]
 
                 qqq = qq * d3
                 for a4, d4 in zip(b4["a"], b4["d"]):
-                    R4 = b4["R"]
-                    dx = b4["lx"]
-                    dy = b4["ly"]
-                    dz = b4["lz"]
 
                     tmp = qqq * d4
+
+                    Rq, c2 = gaussian_product(a3, a4, R3, R4)
                     tmp *= electronic(
                         ax,
                         ay,
@@ -813,6 +848,10 @@ def do_one(parts):
                         R2,
                         R3,
                         R4,
+                        Rp,
+                        c1,
+                        Rq,
+                        c2,
                     )
 
                     ret += tmp
