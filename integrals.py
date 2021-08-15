@@ -557,6 +557,7 @@ def electronic(
     # Compute gaussian products
 
     delta = ONE / (4 * g1) + ONE / (4 * g2)
+    _q = np.dot(Rp - Rq, Rp - Rq) / (4 * delta)
 
     def theta(l, l1, l2, a, b, r, g):
         """
@@ -600,6 +601,13 @@ def electronic(
         b /= tmp
 
         return b
+
+    @functools.lru_cache(maxsize=10000)
+    def _ff(nu):
+        return F(
+            nu,
+            _q,
+        )
 
     for l in range(0, ax + bx + 1):
         for r in range(0, int(l / 2) + 1):
@@ -711,13 +719,7 @@ def electronic(
                                                                     - (i + j + k)
                                                                 )
 
-                                                                ff = F(
-                                                                    nu,
-                                                                    np.dot(
-                                                                        Rp - Rq, Rp - Rq
-                                                                    )
-                                                                    / (4 * delta),
-                                                                )
+                                                                ff = _ff(nu)
 
                                                                 G += Bx * By * Bz * ff
 
