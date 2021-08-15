@@ -185,7 +185,7 @@ def main(infile, outfile):
     )
 
     # caching
-    single_core = True
+    single_core = False
     cache_EE_integrals(config, single_core)
 
     # find work
