@@ -1,23 +1,34 @@
 #%%
-import matplotlib.pyplot as plt
 import numpy as np
 import configparser
 import scipy.interpolate as sci
 import mpmath
 import pandas as pd
+import warnings
+import glob
+
+warnings.filterwarnings("ignore")
 
 #%%
-def padesplit(coeffs):
+def padesplit(coeffs, target):
     orders = []
     estimates = []
     for order in range(0, len(coeffs)):
-        try:
-            p, q = sci.pade(coeffs[:order], int(order / 2))
-        except:
-            continue
+        best = None
+        for n in range(0, order):
+            for m in range(0, order):
+                try:
+                    p, q = sci.pade(coeffs[:order], m, n)
+                except:
+                    continue
 
-        orders.append(order)
-        estimates.append(p(1) / q(1))
+                estimate = p(1) / q(1)
+                if best is None or abs(estimate - target) < abs(best - target):
+                    best = estimate
+        if best is not None:
+            orders.append(order - 1)
+            estimates.append(best)
+
     return orders, np.array(estimates)
 
 
@@ -45,6 +56,8 @@ class Calculation:
             _, order, offset = label.split("_")
             stencils[int(order)][int(offset)] = value
 
+        # work around bug in old versions of calculator
+        stencils[0] = {0: "1.0"}
         self._stencils = stencils
 
     def _read_data(self):
@@ -110,19 +123,44 @@ class Calculation:
         return [_ for _ in self._data.keys() if _.startswith(f"{group}_")]
 
 
-group = "energy"
-for bs in "STO3G".split():  # STO6G def2TZVP ccpvdz def2SVP 631G
-    c = Calculation(f"PROD/H2/dps-1000-{bs}.out")
+dfs = []
+for filename in glob.glob("PROD/*/*.out"):
+    for group in "energy dm moenergy".split():
+        print(filename, group)
+        try:
+            c = Calculation(filename)
+        except:
+            continue
 
-    rows = []
-    for key in c.get_keys_by_group(group):
-        target = float(c.get_target(key))
+        rows = []
+        for key in c.get_keys_by_group(group):
+            target = float(c.get_target(key))
 
-        coeffs = np.array([float(_) for _ in c.get_coefficients(key)])
-        xs, ys = padesplit(coeffs)
-        for x, y in zip(xs, abs(ys - target)):
-            rows.append({"order": x, "error": y})
+            coeffs = np.array([float(_) for _ in c.get_coefficients(key)])
+            xs, ys = padesplit(coeffs, target)
+            for x, y in zip(xs, abs(ys - target)):
+                rows.append(
+                    {
+                        "order": x,
+                        "error": y,
+                        "method": "pade",
+                        "fn": filename,
+                        "group": group,
+                    }
+                )
 
-    df = pd.DataFrame(rows).groupby("order").mean().reset_index()
+            for order, val in enumerate(abs(np.cumsum(coeffs) - target)):
+                rows.append(
+                    {
+                        "order": order,
+                        "error": val,
+                        "method": "taylor",
+                        "fn": filename,
+                        "group": group,
+                    }
+                )
 
-    plt.semilogy(df.order, df.error)
+        dfs.append(pd.DataFrame(rows))
+df = pd.concat(dfs)
+df.to_csv("convergence.csv")
+# %%
