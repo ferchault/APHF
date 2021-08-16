@@ -146,6 +146,7 @@ for filename in glob.glob("PROD/*/*.out"):
                         "method": "pade",
                         "fn": filename,
                         "group": group,
+                        "key": key,
                     }
                 )
 
@@ -157,6 +158,7 @@ for filename in glob.glob("PROD/*/*.out"):
                         "method": "taylor",
                         "fn": filename,
                         "group": group,
+                        "key": key,
                     }
                 )
 
