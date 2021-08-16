@@ -6,6 +6,7 @@ import mpmath
 import pandas as pd
 import warnings
 import glob
+import os
 
 warnings.filterwarnings("ignore")
 
@@ -123,46 +124,49 @@ class Calculation:
         return [_ for _ in self._data.keys() if _.startswith(f"{group}_")]
 
 
-dfs = []
-for filename in glob.glob("PROD/*/*.out"):
-    for group in "energy dm moenergy".split():
-        print(filename, group)
-        try:
-            c = Calculation(filename)
-        except:
-            continue
+if __name__ == "__main__":
+    dfs = []
+    for filename in glob.glob("PROD/*/*.out"):
+        for group in "energy dm moenergy".split():
+            outfile = f"{filename}.{group}.csv"
+            if os.path.exists(outfile):
+                continue
+            print(filename, group)
 
-        rows = []
-        for key in c.get_keys_by_group(group):
-            target = float(c.get_target(key))
+            try:
+                c = Calculation(filename)
+            except:
+                continue
 
-            coeffs = np.array([float(_) for _ in c.get_coefficients(key)])
-            xs, ys = padesplit(coeffs, target)
-            for x, y in zip(xs, abs(ys - target)):
-                rows.append(
-                    {
-                        "order": x,
-                        "error": y,
-                        "method": "pade",
-                        "fn": filename,
-                        "group": group,
-                        "key": key,
-                    }
-                )
+            rows = []
+            for key in c.get_keys_by_group(group):
+                target = float(c.get_target(key))
 
-            for order, val in enumerate(abs(np.cumsum(coeffs) - target)):
-                rows.append(
-                    {
-                        "order": order,
-                        "error": val,
-                        "method": "taylor",
-                        "fn": filename,
-                        "group": group,
-                        "key": key,
-                    }
-                )
+                coeffs = np.array([float(_) for _ in c.get_coefficients(key)])
+                xs, ys = padesplit(coeffs, target)
+                for x, y in zip(xs, abs(ys - target)):
+                    rows.append(
+                        {
+                            "order": x,
+                            "error": y,
+                            "method": "pade",
+                            "fn": filename,
+                            "group": group,
+                            "key": key,
+                        }
+                    )
 
-        dfs.append(pd.DataFrame(rows))
-df = pd.concat(dfs)
-df.to_csv("convergence.csv")
-# %%
+                for order, val in enumerate(abs(np.cumsum(coeffs) - target)):
+                    rows.append(
+                        {
+                            "order": order,
+                            "error": val,
+                            "method": "taylor",
+                            "fn": filename,
+                            "group": group,
+                            "key": key,
+                        }
+                    )
+
+            df = pd.DataFrame(rows)
+            df.to_csv(outfile)
