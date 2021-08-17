@@ -91,6 +91,10 @@ def get_energy(config, offset, lval):
     converged = False
 
     iter = 1
+    threshold = mpmath.mp.mpf(f"1e-{mpmath.mp.dps-3}")
+    if offset is None:
+        threshold = mpmath.mp.mpf(f"1e-100")
+
     while not converged and iter <= maxiter:
         Pnew, F, E = RHF_step(
             bs, mol, N, Hc, X, P, ee, Gfactor, False
@@ -102,9 +106,9 @@ def get_energy(config, offset, lval):
         # print(Pnew)
         if iter % 100 == 0:
             print(
-                f"{offset}@{iter}: e{int(mpmath.log10(delta_P(P, Pnew)))}/{mpmath.mp.dps-3}"
+                f"{offset}@{iter}: e{int(mpmath.log10(delta_P(P, Pnew)))}/{int(mpmath.log10(threshold))}"
             )
-        if delta_P(P, Pnew) < mpmath.mp.mpf(f"1e-{mpmath.mp.dps-3}"):
+        if delta_P(P, Pnew) < threshold:
             converged = True
 
         if iter == maxiter:
