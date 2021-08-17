@@ -118,7 +118,7 @@ class Calculation:
     def get_electronic_energy_target(self):
         self._update_accuracy()
 
-        return float(self._config["singlepoints"]["energy_target"])
+        return mpmath.mp.mpf(self._config["singlepoints"]["energy_target"])
 
     def get_keys_by_group(self, group):
         return [_ for _ in self._data.keys() if _.startswith(f"{group}_")]
