@@ -125,8 +125,9 @@ def init_config(infile):
     config = configparser.ConfigParser()
     with open(infile) as fh:
         config.read_file(fh)
-    with open(infile, "rb") as fh:
-        config["meta"]["cache"] = hashlib.sha256(fh.read()).hexdigest()
+    if "cache" not in config["meta"]:
+        with open(infile, "rb") as fh:
+            config["meta"]["cache"] = hashlib.sha256(fh.read()).hexdigest()
     return config
 
 
