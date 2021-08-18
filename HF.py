@@ -37,6 +37,11 @@ import numpy as np
 import numpy.linalg as la
 import mpmath
 
+import warnings
+
+warnings.filterwarnings("ignore")
+import pyscf.scf
+import pyscf.gto
 mpmath.mp.dps = 100
 
 
@@ -60,13 +65,58 @@ def get_ee(cachename):
         i, j, k, l, E = result
         K = max(K, max(i, j, k, l))
     K = K + 1
-    EE = mpmath.matrix(K, K, K, K)
+    #EE = mpmath.matrix(K, K, K, K)
+    EE = np.zeros((K, K, K, K)).astype(mpmath.mp.mpf)
     for result in results:
         i, j, k, l, E = result
         EE[i, j, k, l] = E
 
     return EE
 
+def print_mat(mat):
+    for i in range(mat.shape[0]):
+        line = ""
+        for j in range(mat.shape[1]):
+            line += f"{mpmath.nstr(mat[i, j]):<15}"
+        print (line)
+
+def verify_pyscf(config, offset, lval):
+    angstrom = 1 / 0.52917721067
+    reference_Zs = config["meta"]["reference"].strip().split()
+    basis_Zs = config["meta"]["basis"].strip().split()
+    target_Zs = config["meta"]["target"].strip().split()
+    coords = config["meta"]["coords"].strip().split("\n")
+
+    mol = []
+
+    N = 0
+    atomspec = ""
+    basisspec = {}
+    idx = 0
+
+    for ref, tar, bas, coord in zip(reference_Zs, target_Zs, basis_Zs, coords):
+        N += int(ref)
+        try:
+            ref = bse.lut.element_data_from_Z(int(ref))[0].capitalize()
+        except:
+            ref = "X"
+        bas = bse.lut.element_data_from_Z(int(bas))[0].capitalize()
+
+        coord = tuple([float(_) / angstrom for _ in coord.split()])
+        atomspec += f"{ref}:{idx} {coord[0]} {coord[1]} {coord[2]};"
+        bsespec = bse.get_basis(config["meta"]["basisset"], elements=bas, fmt="NWCHEM")
+        basisspec[f"{ref}:{idx}"] = pyscf.gto.parse(bsespec)
+        idx += 1
+
+    mol = pyscf.gto.M(atom=atomspec, basis=basisspec, verbose=0)
+    calc = pyscf.scf.RHF(mol)
+    calc.kernel()
+    S = calc.get_ovlp(mol)
+    Hc = calc.get_hcore(mol)
+    P = calc.make_rdm1()
+    ee = mol.intor('int2e')
+    F = mol.get_fock()
+    return mol, calc, calc.energy_elec()[0], S, Hc, P, ee, F
 
 def get_energy(config, offset, lval):
     mpmath.mp.dps = config["meta"].getint("dps")
@@ -75,18 +125,31 @@ def get_energy(config, offset, lval):
     if lval is None:
         lval = step * offset
 
+    MOL, CALC, pyscf_e, pyscf_S, pyscf_Hc, pyscf_P, pyscf_ee, pyscf_F = verify_pyscf(config, offset, lval)
     mol, bs, N = build_system(config, lval)
     ee = get_ee(config["meta"]["cache"])
+    assert (abs(np.max(MP2NP(ee)) - np.max(pyscf_ee)) < 1e-6)
+    assert (np.allclose(MP2NP(ee).astype(float), pyscf_ee))
     K = bs.K
     Gfactor = G_ee_cache(K, ee)
     S = S_overlap(bs)
+    assert (np.allclose(S.astype(float), pyscf_S))
     X = X_transform(S)
+
+    # check X
+    s, U = np.linalg.eigh(S.astype(float))
+    Xref = np.dot(U,np.diag(s**(-1./2.)))
+    assert (np.allclose((Xref.T @ S @ Xref).astype(float), np.identity(len(s))))
+    assert (np.allclose((X.T @ S @ X).astype(float), np.identity(len(s))))
+
+
     Hc = H_core(bs, mol)
+    assert (np.allclose(Hc.astype(float), pyscf_Hc))
 
     maxiter = 100000  # Maximal number of iteration
 
-    Pnew = np.array(mpmath.zeros(K, K).tolist())
-    P = np.array(mpmath.zeros(K, K).tolist())
+    #P = np.array(mpmath.zeros(K, K).tolist())
+    P = np.array(pyscf_P).astype(mpmath.mp.mpf)
 
     converged = False
 
@@ -99,12 +162,31 @@ def get_energy(config, offset, lval):
         Pnew, F, E = RHF_step(
             bs, mol, N, Hc, X, P, ee, Gfactor, False
         )  # Perform an SCF step
+        assert (np.allclose(F.astype(float), MOL.get_fock(dm=P.astype(float))))
+        mo_energy, mo_coeff = MOL.eig(F.astype(float), pyscf_S)
+        
+        import scipy.linalg
+        Fx = np.dot(X.conj().T, np.dot(F, X))
+        e, Cx = scipy.linalg.eigh(Fx.astype(float))
+        idx = e.argsort()
+        e = e[idx]
+        Cx = Cx[:,idx]
+        e = np.diag(e)
+        C = np.dot(X,Cx)
+        Pnew2 = np.zeros((K,K))
+
+        for i in range(K):
+            for j in range(K):
+                for k in range(int(N/2)): #TODO Only for RHF
+                    Pnew2[i,j] += 2 * C[i,k] * C[j,k].conjugate()
+
+        assert(np.allclose(Pnew2, Pnew.astype(float)))
 
         # Check convergence of the SCF cycle
         Pnew = (P + Pnew) / 2
 
         # print(Pnew)
-        if iter % 100 == 0:
+        if iter % 10 == 0:
             print(
                 f"{offset}@{iter}: e{int(mpmath.log10(delta_P(P, Pnew)))}/{int(mpmath.log10(threshold))}"
             )
@@ -118,6 +200,8 @@ def get_energy(config, offset, lval):
         P = Pnew
 
         iter += 1
+    assert np.allclose(P.astype(float), pyscf_P)
+    assert (energy_el(P, F, Hc) - pyscf_e) < 1e-6
     return offset, (iter, energy_el(P, F, Hc), E, P)
 
 
@@ -201,7 +285,7 @@ def main(infile, outfile):
     )
     step = mpmath.mpf(f'1e-{config["meta"].getint("deltalambda")}')
     tasks = [(config, _, None) for _ in offsets]
-    tasks += [(config, None, mpmath.mpf("1.0"))]
+    #tasks += [(config, None, mpmath.mpf("1.0"))]
 
     # evaluate
     if single_core:
@@ -231,10 +315,10 @@ def main(infile, outfile):
 
     # store endpoints
     ref = res[0][1]
-    target = res[None][1]
+    #target = res[None][1]
     config.add_section("endpoints")
     config["endpoints"]["reference"] = str(ref)
-    config["endpoints"]["target"] = str(target)
+    #config["endpoints"]["target"] = str(target)
 
     # stencil
     config.add_section("stencil")

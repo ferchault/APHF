@@ -80,7 +80,7 @@ def X_transform(S):
         1989
     """
 
-    s, U = mpmath.mp.eig(NP2MP(S))
+    s, U = mpmath.mp.eighe(NP2MP(S))
     s = np.array(s)
     U = MP2NP(U)
 
@@ -253,7 +253,7 @@ def P_density(C, N):
 
 
 def G_ee_cache(K, ee):
-    Gfactor = mpmath.matrix(K, K, K, K)
+    Gfactor = np.zeros((K, K, K, K)).astype(mpmath.mp.mpf)
     q = mpmath.mp.mpf("0.5")
     for i in range(K):
         for j in range(K):
