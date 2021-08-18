@@ -185,7 +185,7 @@ def get_energy(config, offset, lval):
         Pnew = (P + Pnew) / 2
 
         # print(Pnew)
-        if iter % 10 == 0:
+        if iter % 100 == 0:
             print(
                 f"{offset}@{iter}: e{int(mpmath.log10(delta_P(P, Pnew)))}/{int(mpmath.log10(threshold))}"
             )
@@ -284,7 +284,7 @@ def main(infile, outfile):
     )
     step = mpmath.mpf(f'1e-{config["meta"].getint("deltalambda")}')
     tasks = [(config, _, None) for _ in offsets]
-    #tasks += [(config, None, mpmath.mpf("1.0"))]
+    tasks += [(config, None, mpmath.mpf("1.0"))]
 
     # evaluate
     if single_core:
@@ -314,10 +314,10 @@ def main(infile, outfile):
 
     # store endpoints
     ref = res[0][1]
-    #target = res[None][1]
+    target = res[None][1]
     config.add_section("endpoints")
     config["endpoints"]["reference"] = str(ref)
-    #config["endpoints"]["target"] = str(target)
+    config["endpoints"]["target"] = str(target)
 
     # stencil
     config.add_section("stencil")
