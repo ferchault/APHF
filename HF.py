@@ -26,7 +26,6 @@ import os
 import click
 import basis_set_exchange as bse
 import pickle
-from numpy.lib.arraysetops import isin
 from RHF import *
 
 from matrices import *
@@ -40,8 +39,8 @@ import mpmath
 import warnings
 
 warnings.filterwarnings("ignore")
-import pyscf.scf
-import pyscf.gto
+#import pyscf.scf
+#import pyscf.gto
 mpmath.mp.dps = 100
 
 
@@ -125,31 +124,31 @@ def get_energy(config, offset, lval):
     if lval is None:
         lval = step * offset
 
-    MOL, CALC, pyscf_e, pyscf_S, pyscf_Hc, pyscf_P, pyscf_ee, pyscf_F = verify_pyscf(config, offset, lval)
+    #MOL, CALC, pyscf_e, pyscf_S, pyscf_Hc, pyscf_P, pyscf_ee, pyscf_F = verify_pyscf(config, offset, lval)
     mol, bs, N = build_system(config, lval)
     ee = get_ee(config["meta"]["cache"])
-    assert (abs(np.max(MP2NP(ee)) - np.max(pyscf_ee)) < 1e-6)
-    assert (np.allclose(MP2NP(ee).astype(float), pyscf_ee))
+    #assert (abs(np.max(MP2NP(ee)) - np.max(pyscf_ee)) < 1e-6)
+    #assert (np.allclose(MP2NP(ee).astype(float), pyscf_ee))
     K = bs.K
     Gfactor = G_ee_cache(K, ee)
     S = S_overlap(bs)
-    assert (np.allclose(S.astype(float), pyscf_S))
+    #assert (np.allclose(S.astype(float), pyscf_S))
     X = X_transform(S)
 
     # check X
-    s, U = np.linalg.eigh(S.astype(float))
-    Xref = np.dot(U,np.diag(s**(-1./2.)))
-    assert (np.allclose((Xref.T @ S @ Xref).astype(float), np.identity(len(s))))
-    assert (np.allclose((X.T @ S @ X).astype(float), np.identity(len(s))))
+    #s, U = np.linalg.eigh(S.astype(float))
+    #Xref = np.dot(U,np.diag(s**(-1./2.)))
+    #assert (np.allclose((Xref.T @ S @ Xref).astype(float), np.identity(len(s))))
+    #assert (np.allclose((X.T @ S @ X).astype(float), np.identity(len(s))))
 
 
     Hc = H_core(bs, mol)
-    assert (np.allclose(Hc.astype(float), pyscf_Hc))
+    #assert (np.allclose(Hc.astype(float), pyscf_Hc))
 
     maxiter = 100000  # Maximal number of iteration
 
-    #P = np.array(mpmath.zeros(K, K).tolist())
-    P = np.array(pyscf_P).astype(mpmath.mp.mpf)
+    P = np.array(mpmath.zeros(K, K).tolist())
+    #P = np.array(pyscf_P).astype(mpmath.mp.mpf)
 
     converged = False
 
@@ -162,25 +161,25 @@ def get_energy(config, offset, lval):
         Pnew, F, E = RHF_step(
             bs, mol, N, Hc, X, P, ee, Gfactor, False
         )  # Perform an SCF step
-        assert (np.allclose(F.astype(float), MOL.get_fock(dm=P.astype(float))))
-        mo_energy, mo_coeff = MOL.eig(F.astype(float), pyscf_S)
+        #assert (np.allclose(F.astype(float), MOL.get_fock(dm=P.astype(float))))
+        #mo_energy, mo_coeff = MOL.eig(F.astype(float), pyscf_S)
         
-        import scipy.linalg
-        Fx = np.dot(X.conj().T, np.dot(F, X))
-        e, Cx = scipy.linalg.eigh(Fx.astype(float))
-        idx = e.argsort()
-        e = e[idx]
-        Cx = Cx[:,idx]
-        e = np.diag(e)
-        C = np.dot(X,Cx)
-        Pnew2 = np.zeros((K,K))
+        #import scipy.linalg
+        #Fx = np.dot(X.conj().T, np.dot(F, X))
+        #e, Cx = scipy.linalg.eigh(Fx.astype(float))
+        #idx = e.argsort()
+        #e = e[idx]
+        #Cx = Cx[:,idx]
+        #e = np.diag(e)
+        #C = np.dot(X,Cx)
+        #Pnew2 = np.zeros((K,K))
 
-        for i in range(K):
-            for j in range(K):
-                for k in range(int(N/2)): #TODO Only for RHF
-                    Pnew2[i,j] += 2 * C[i,k] * C[j,k].conjugate()
+        #for i in range(K):
+        #    for j in range(K):
+        #        for k in range(int(N/2)): #TODO Only for RHF
+        #            Pnew2[i,j] += 2 * C[i,k] * C[j,k].conjugate()
 
-        assert(np.allclose(Pnew2, Pnew.astype(float)))
+        #assert(np.allclose(Pnew2, Pnew.astype(float)))
 
         # Check convergence of the SCF cycle
         Pnew = (P + Pnew) / 2
@@ -200,8 +199,8 @@ def get_energy(config, offset, lval):
         P = Pnew
 
         iter += 1
-    assert np.allclose(P.astype(float), pyscf_P)
-    assert (energy_el(P, F, Hc) - pyscf_e) < 1e-6
+    #assert np.allclose(P.astype(float), pyscf_P)
+    #assert (energy_el(P, F, Hc) - pyscf_e) < 1e-6
     return offset, (iter, energy_el(P, F, Hc), E, P)
 
 

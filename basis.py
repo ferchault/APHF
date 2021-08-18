@@ -49,14 +49,14 @@ class Basis:
 
             for shell in db:
                 if shell["function_type"] != "gto":
-                    raise ValueError()
+                    raise ValueError("Unknown function type")
 
                 a = [mpmath.mpf(_) for _ in shell["exponents"]]
                 for angmom, coeffs in zip(
                     shell["angular_momentum"], shell["coefficients"]
                 ):
                     if angmom > 1:
-                        raise ValueError()
+                        raise ValueError("Angular momentum not implemented")
 
                     d = [mpmath.mpf(_) for _ in coeffs]
                     if angmom == 0:
