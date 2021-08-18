@@ -82,4 +82,4 @@ if __name__ == "__main__":
     if abs(calc_target.energy_elec()[0] - etarget) < 1e-6:
         print("OK tar", sys.argv[1])
     else:
-        print("EE tar", sys.argv[1], "pyscf", calc.energy_elec()[0], "fd", etarget)
+        print("EE tar", sys.argv[1], "pyscf", calc_target.energy_elec()[0], "fd", etarget)
