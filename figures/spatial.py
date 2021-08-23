@@ -146,5 +146,5 @@ for bidx, basis in enumerate("sto3g 6-31G def2SVP def2TZVP ".split()):
     if X == 0 and Y == 0:
         ax.legend(frameon=False, ncol=2, columnspacing=0.8, handlelength=1)
     fix_axes(ax)
-plt.savefig("distance.pdf")
+plt.savefig("figures/spatial.pdf", bbox_inches="tight")
 # %%

@@ -1,0 +1,448 @@
+
+Geometry optimization cycle 1
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.000000    0.000000  0.000000  0.000000
+   H   0.000000   0.000000   1.200000    0.000000  0.000000  0.000000
+converged SCF energy = -1.00510670656849
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.1687836460
+1 H     0.0000000000     0.0000000000     0.1687836460
+----------------------------------------------
+cycle 1: E = -1.00510670657  dE = -1.00511  norm(grad) = 0.238696
+
+Geometry optimization cycle 2
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.079377    0.000000  0.000000  0.079377
+   H   0.000000   0.000000   1.120623    0.000000  0.000000 -0.079377
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.0542414055854
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.1556179844
+1 H     0.0000000000     0.0000000000     0.1556179844
+----------------------------------------------
+cycle 2: E = -1.05424140559  dE = -0.0491347  norm(grad) = 0.220077
+
+Geometry optimization cycle 3
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.238130    0.000000  0.000000  0.158753
+   H   0.000000   0.000000   0.961870    0.000000  0.000000 -0.158753
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.11737343265047
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.0120388723
+1 H     0.0000000000     0.0000000000     0.0120388723
+----------------------------------------------
+cycle 3: E = -1.11737343265  dE = -0.063132  norm(grad) = 0.0170255
+
+Geometry optimization cycle 4
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.251436    0.000000  0.000000  0.013306
+   H   0.000000   0.000000   0.948564    0.000000  0.000000 -0.013306
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.11726529921167
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000     0.0171207251
+1 H     0.0000000000     0.0000000000    -0.0171207251
+----------------------------------------------
+cycle 4: E = -1.11726529921  dE = 0.000108133  norm(grad) = 0.0242124
+
+Geometry optimization cycle 5
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.243623    0.000000  0.000000 -0.007813
+   H   0.000000   0.000000   0.956377    0.000000  0.000000  0.007813
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.11750560532831
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.0005656191
+1 H     0.0000000000     0.0000000000     0.0005656191
+----------------------------------------------
+cycle 5: E = -1.11750560533  dE = -0.000240306  norm(grad) = 0.000799906
+
+Geometry optimization cycle 6
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.243894    0.000000  0.000000  0.000271
+   H   0.000000   0.000000   0.956106    0.000000  0.000000 -0.000271
+converged SCF energy = -1.11750588476901
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000     0.0000199445
+1 H     0.0000000000     0.0000000000    -0.0000199445
+----------------------------------------------
+cycle 6: E = -1.11750588477  dE = -2.79441e-07  norm(grad) = 2.82058e-05
+
+Geometry optimization cycle 1
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.000000    0.000000  0.000000  0.000000
+   H   0.000000   0.000000   1.200000    0.000000  0.000000  0.000000
+converged SCF energy = -1.05575928255497
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.1059733955
+1 H     0.0000000000     0.0000000000     0.1059733955
+----------------------------------------------
+cycle 1: E = -1.05575928255  dE = -1.05576  norm(grad) = 0.149869
+
+Geometry optimization cycle 2
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.079377    0.000000  0.000000  0.079377
+   H   0.000000   0.000000   1.120623    0.000000  0.000000 -0.079377
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.0870911975483
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.1008421767
+1 H     0.0000000000     0.0000000000     0.1008421767
+----------------------------------------------
+cycle 2: E = -1.08709119755  dE = -0.0313319  norm(grad) = 0.142612
+
+Geometry optimization cycle 3
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.238130    0.000000  0.000000  0.158753
+   H   0.000000   0.000000   0.961870    0.000000  0.000000 -0.158753
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.12679901241499
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000     0.0049375744
+1 H     0.0000000000     0.0000000000    -0.0049375744
+----------------------------------------------
+cycle 3: E = -1.12679901241  dE = -0.0397078  norm(grad) = 0.00698278
+
+Geometry optimization cycle 4
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.230720    0.000000  0.000000 -0.007409
+   H   0.000000   0.000000   0.969280    0.000000  0.000000  0.007409
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.1267744712433
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.0065063271
+1 H     0.0000000000     0.0000000000     0.0065063271
+----------------------------------------------
+cycle 4: E = -1.12677447124  dE = 2.45412e-05  norm(grad) = 0.00920134
+
+Geometry optimization cycle 5
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.234933    0.000000  0.000000  0.004213
+   H   0.000000   0.000000   0.965067    0.000000  0.000000 -0.004213
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.12682780665982
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.0001355996
+1 H     0.0000000000     0.0000000000     0.0001355996
+----------------------------------------------
+cycle 5: E = -1.12682780666  dE = -5.33354e-05  norm(grad) = 0.000191767
+
+Geometry optimization cycle 1
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.000000    0.000000  0.000000  0.000000
+   H   0.000000   0.000000   1.200000    0.000000  0.000000  0.000000
+converged SCF energy = -1.06206160142902
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.1077735957
+1 H    -0.0000000000    -0.0000000000     0.1077735957
+----------------------------------------------
+cycle 1: E = -1.06206160143  dE = -1.06206  norm(grad) = 0.152415
+
+Geometry optimization cycle 2
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.079377    0.000000  0.000000  0.079377
+   H   0.000000   0.000000   1.120623    0.000000  0.000000 -0.079377
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.09379813601207
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H    -0.0000000000    -0.0000000000    -0.1015045132
+1 H     0.0000000000     0.0000000000     0.1015045132
+----------------------------------------------
+cycle 2: E = -1.09379813601  dE = -0.0317365  norm(grad) = 0.143549
+
+Geometry optimization cycle 3
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.238130    0.000000  0.000000  0.158753
+   H   0.000000   0.000000   0.961870    0.000000  0.000000 -0.158753
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.13246297988694
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H    -0.0000000000     0.0000000000     0.0090070439
+1 H     0.0000000000    -0.0000000000    -0.0090070439
+----------------------------------------------
+cycle 3: E = -1.13246297989  dE = -0.0386648  norm(grad) = 0.0127379
+
+Geometry optimization cycle 4
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.225195    0.000000  0.000000 -0.012934
+   H   0.000000   0.000000   0.974805    0.000000  0.000000  0.012934
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.13241253631116
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000    -0.0000000000    -0.0105428126
+1 H    -0.0000000000     0.0000000000     0.0105428126
+----------------------------------------------
+cycle 4: E = -1.13241253631  dE = 5.04436e-05  norm(grad) = 0.0149098
+
+Geometry optimization cycle 5
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.232171    0.000000  0.000000  0.006975
+   H   0.000000   0.000000   0.967829    0.000000  0.000000 -0.006975
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.1325586498902
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H    -0.0000000000    -0.0000000000    -0.0003943239
+1 H     0.0000000000     0.0000000000     0.0003943239
+----------------------------------------------
+cycle 5: E = -1.13255864989  dE = -0.000146114  norm(grad) = 0.000557658
+
+Geometry optimization cycle 6
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.232421    0.000000  0.000000  0.000250
+   H   0.000000   0.000000   0.967579    0.000000  0.000000 -0.000250
+converged SCF energy = -1.13255884282575
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000    -0.0000138470
+1 H    -0.0000000000    -0.0000000000     0.0000138470
+----------------------------------------------
+cycle 6: E = -1.13255884283  dE = -1.92936e-07  norm(grad) = 1.95826e-05
+
+Geometry optimization cycle 1
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.000000    0.000000  0.000000  0.000000
+   H   0.000000   0.000000   1.200000    0.000000  0.000000  0.000000
+converged SCF energy = -1.06095092598171
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000    -0.0000000000    -0.1072720847
+1 H    -0.0000000000     0.0000000000     0.1072720847
+----------------------------------------------
+cycle 1: E = -1.06095092598  dE = -1.06095  norm(grad) = 0.151706
+
+Geometry optimization cycle 2
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.079377    0.000000  0.000000  0.079377
+   H   0.000000   0.000000   1.120623    0.000000  0.000000 -0.079377
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.09245138227665
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H    -0.0000000000    -0.0000000000    -0.1002727864
+1 H     0.0000000000     0.0000000000     0.1002727864
+----------------------------------------------
+cycle 2: E = -1.09245138228  dE = -0.0315005  norm(grad) = 0.141807
+
+Geometry optimization cycle 3
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.238130    0.000000  0.000000  0.158753
+   H   0.000000   0.000000   0.961870    0.000000  0.000000 -0.158753
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.12852363358867
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000     0.0000000000     0.0189352881
+1 H    -0.0000000000    -0.0000000000    -0.0189352881
+----------------------------------------------
+cycle 3: E = -1.12852363359  dE = -0.0360723  norm(grad) = 0.0267785
+
+Geometry optimization cycle 4
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.212943    0.000000  0.000000 -0.025187
+   H   0.000000   0.000000   0.987057    0.000000  0.000000  0.025187
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.12842708880345
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H    -0.0000000000     0.0000000000    -0.0189910108
+1 H     0.0000000000    -0.0000000000     0.0189910108
+----------------------------------------------
+cycle 4: E = -1.1284270888  dE = 9.65448e-05  norm(grad) = 0.0268573
+
+Geometry optimization cycle 5
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.225555    0.000000  0.000000  0.012612
+   H   0.000000   0.000000   0.974445    0.000000  0.000000 -0.012612
+
+WARN: Large deviations found between the input molecule and the molecule from chkfile
+Initial guess density matrix may have large error.
+
+converged SCF energy = -1.12892582430357
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H    -0.0000000000    -0.0000000000    -0.0014789173
+1 H     0.0000000000     0.0000000000     0.0014789173
+----------------------------------------------
+cycle 5: E = -1.1289258243  dE = -0.000498736  norm(grad) = 0.0020915
+
+Geometry optimization cycle 6
+Cartesian coordinates (Angstrom)
+ Atom        New coordinates             dX        dY        dZ
+   H   0.000000   0.000000   0.226466    0.000000  0.000000  0.000911
+   H   0.000000   0.000000   0.973534    0.000000  0.000000 -0.000911
+converged SCF energy = -1.12892855494867
+--------------- SCF_Scanner gradients ---------------
+         x                y                z
+0 H     0.0000000000    -0.0000000000    -0.0001046861
+1 H    -0.0000000000     0.0000000000     0.0001046861
+----------------------------------------------
+cycle 6: E = -1.12892855495  dE = -2.73065e-06  norm(grad) = 0.000148048
+closest distances at order
+4 sto3g [0.0166405]
+converged SCF energy = -1.09456409804577
+converged SCF energy = -1.09978677290862
+converged SCF energy = -1.10420419215568
+converged SCF energy = -1.10788254262464
+converged SCF energy = -1.11088225799459
+converged SCF energy = -1.11325861214001
+converged SCF energy = -1.115062229693
+converged SCF energy = -1.11633952758948
+converged SCF energy = -1.1171330992337
+converged SCF energy = -1.1174820510639
+converged SCF energy = -1.1174222996983
+converged SCF energy = -1.11698683645044
+converged SCF energy = -1.1162059648019
+converged SCF energy = -1.11510751538637
+converged SCF energy = -1.11371704215516
+converged SCF energy = -1.11205800264553
+converged SCF energy = -1.11015192464546
+converged SCF energy = -1.10801856102904
+converged SCF energy = -1.10567603411446
+converged SCF energy = -1.10314097055933
+4 6-31G [0.00180955]
+converged SCF energy = -1.10407263136312
+converged SCF energy = -1.10880700242194
+converged SCF energy = -1.11285450078539
+converged SCF energy = -1.11627640845886
+converged SCF energy = -1.11912811729533
+converged SCF energy = -1.12145978097433
+converged SCF energy = -1.12331688513474
+converged SCF energy = -1.12474074664584
+converged SCF energy = -1.12576895144066
+converged SCF energy = -1.12643573904339
+converged SCF energy = -1.12677234083305
+converged SCF energy = -1.12680727815499
+converged SCF energy = -1.12656662558725
+converged SCF energy = -1.12607424396849
+converged SCF energy = -1.12535198718148
+converged SCF energy = -1.12441988614844
+converged SCF energy = -1.12329631302262
+converged SCF energy = -1.12199812814667
+converged SCF energy = -1.12054081198753
+converged SCF energy = -1.11893858394042
+4 def2SVP [0.00187322]
+converged SCF energy = -1.10055228256649
+converged SCF energy = -1.1059581689242
+converged SCF energy = -1.11063781928085
+converged SCF energy = -1.11465479917722
+converged SCF energy = -1.11806660321559
+converged SCF energy = -1.12092531131805
+converged SCF energy = -1.12327816538216
+converged SCF energy = -1.12516807757927
+converged SCF energy = -1.12663407960874
+converged SCF energy = -1.12771172066238
+converged SCF energy = -1.12843342059999
+converged SCF energy = -1.12882878383007
+converged SCF energy = -1.12892487858069
+converged SCF energy = -1.12874648559002
+converged SCF energy = -1.12831631971368
+converged SCF energy = -1.12765522750677
+converged SCF energy = -1.126782363472
+converged SCF energy = -1.12571534735642
+converged SCF energy = -1.12447040461285
+converged SCF energy = -1.12306249191201
+4 def2TZVP [0.00033011]
+converged SCF energy = -1.10862774111344
+converged SCF energy = -1.11345783051203
+converged SCF energy = -1.11760762577539
+converged SCF energy = -1.12113675425381
+converged SCF energy = -1.12409915629027
+converged SCF energy = -1.12654370667023
+converged SCF energy = -1.12851475788936
+converged SCF energy = -1.13005261675696
+converged SCF energy = -1.13119396386329
+converged SCF energy = -1.13197222382281
+converged SCF energy = -1.13241789289439
+converged SCF energy = -1.13255882951891
+converged SCF energy = -1.13242051245472
+converged SCF energy = -1.132026270495
+converged SCF energy = -1.13139748718483
+converged SCF energy = -1.13055378348995
+converged SCF energy = -1.12951318098761
+converged SCF energy = -1.1282922478284
+converged SCF energy = -1.1269062294481
+converged SCF energy = -1.12536916577639
