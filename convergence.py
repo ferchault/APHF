@@ -7,28 +7,39 @@ import pandas as pd
 import warnings
 import glob
 import os
+import mpmath
 
+mpmath.dps = 1000
 warnings.filterwarnings("ignore")
 
 #%%
 def padesplit(coeffs, target):
     orders = []
     estimates = []
-    for order in range(0, len(coeffs)):
-        best = None
-        for n in range(0, order):
-            for m in range(0, order):
-                try:
-                    p, q = sci.pade(coeffs[:order], m, n)
-                except:
-                    continue
+    for leading in range(1, len(coeffs)):
+        s = coeffs[:leading]
+        n = int((len(s) - 1) / 2)
+        try:
+            p, q = mpmath.pade(s, n, n)
+        except:
+            continue
 
-                estimate = p(1) / q(1)
-                if best is None or abs(estimate - target) < abs(best - target):
-                    best = estimate
-        if best is not None:
-            orders.append(order - 1)
-            estimates.append(best)
+        estimates.append(mpmath.polyval(p[::-1], 1) / mpmath.polyval(q[::-1], 1))
+        orders.append(leading - 1)
+        # best = None
+        # for n in range(0, order):
+        #     for m in range(0, order):
+        #         try:
+        #             p, q = sci.pade(coeffs[:order], m, n)
+        #         except:
+        #             continue
+
+        #         estimate = p(1) / q(1)
+        #         if best is None or abs(estimate - target) < abs(best - target):
+        #             best = estimate
+        # if best is not None:
+        #     orders.append(order - 1)
+        #     estimates.append(best)
 
     return orders, np.array(estimates)
 
@@ -42,6 +53,7 @@ class Calculation:
         self._maxorder = self._config["meta"].getint("orders")
         self._read_stencil()
         self._read_data()
+        self._config = config
 
     def _update_accuracy(self):
         mpmath.mp.dps = self._config["meta"].getint("dps")
@@ -126,7 +138,7 @@ class Calculation:
 
 if __name__ == "__main__":
     dfs = []
-    for filename in glob.glob("PROD/*/*.out"):
+    for filename in glob.glob("PROD/*/*/*.out"):
         for group in "energy dm moenergy".split():
             outfile = f"{filename}.{group}.csv"
             if os.path.exists(outfile):
@@ -144,11 +156,13 @@ if __name__ == "__main__":
 
                 coeffs = np.array([float(_) for _ in c.get_coefficients(key)])
                 xs, ys = padesplit(coeffs, target)
-                for x, y in zip(xs, abs(ys - target)):
+                for x, y in zip(xs, ys):
+                    error = abs(y - target)
                     rows.append(
                         {
                             "order": x,
-                            "error": y,
+                            "error": error,
+                            "value": y,
                             "method": "pade",
                             "fn": filename,
                             "group": group,
@@ -156,11 +170,13 @@ if __name__ == "__main__":
                         }
                     )
 
-                for order, val in enumerate(abs(np.cumsum(coeffs) - target)):
+                for order, val in enumerate(np.cumsum(coeffs)):
+                    error = abs(val - target)
                     rows.append(
                         {
                             "order": order,
-                            "error": val,
+                            "error": error,
+                            "value": val,
                             "method": "taylor",
                             "fn": filename,
                             "group": group,
@@ -170,3 +186,5 @@ if __name__ == "__main__":
 
             df = pd.DataFrame(rows)
             df.to_csv(outfile)
+
+# %%
