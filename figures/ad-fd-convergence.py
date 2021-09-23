@@ -39,7 +39,7 @@ def read_thiswork_derivative(fn):
 def placeletter(ax, letter):
     ax.text(
         1.0,
-        1.1,
+        1.05,
         "(" + letter.lower() + ")",
         transform=ax.transAxes,
         # fontsize=26,
@@ -76,11 +76,11 @@ def pretty_semilogy(ax, ys, color):
 
 
 def _pretty(fun, ys, color, ms):
-    fun(ys, "-", alpha=0.5, color=color)
+    fun(ys, "-", alpha=0.5, color=color, zorder=6)
     if color == "C0":
-        fun(ys, "o", markersize=ms, color=color, clip_on=False)
+        fun(ys, "o", markersize=ms, color=color, clip_on=False, zorder=6)
     else:
-        fun(ys, "o", markersize=ms, color=color)
+        fun(ys, "o", markersize=ms, color=color, zorder=6)
 
 
 def make_figure(ext):
@@ -106,8 +106,8 @@ def make_figure(ext):
     target, thiswork = read_thiswork_derivative("PROD/H2/dps-1000-sto3g.out")
     pretty_plot(axcompare, np.cumsum(thiswork[:cutoff]), "C0")
     axcompare.text(8, -2.68, "FD", ha="left", color="C0", va="top")
-    axcompare.axhline(target, color="white", lw=5, alpha=0.8)
-    axcompare.axhline(target, color="C3")
+    axcompare.axhline(target, color="white", lw=5, alpha=0.8, zorder=10, xmin=0.04)
+    axcompare.axhline(target, color="C3", zorder=11, xmin=0.01)
     # axcompare.text(-0.2, target - 0.03, "He", ha="left", color="C3", va="top")
     axcompare.annotate(
         "He",
@@ -120,7 +120,7 @@ def make_figure(ext):
     )
     # axcompare.legend(frameon=False)
     axcompare.set_xlabel("Order", loc="right", weight=500, va="bottom", labelpad=-30)
-    axcompare.set_ylabel(r"$\bf{E}$ [Ha]", rotation=0, ha="left", y=1.1, weight=500)
+    axcompare.set_ylabel(r"$\bf{E}$ [Ha]", rotation=0, ha="left", y=1.05, weight=500)
     placeletter(axcompare, "A")
     axcompare.set_xticks((0, 5, 10))
     axcompare.set_xlim(0, 10)
@@ -134,9 +134,9 @@ def make_figure(ext):
     pretty_semilogy(axN2, abs(np.cumsum(thiswork) - target), "C1")
     axN2.text(40, 5e-7, "CO → N$_2$", ha="right", color="C1", va="bottom")
     # axN2.legend(frameon=False)
-    axN2.set_ylabel("$\\bf{\Delta E}$ [Ha]", rotation=0, ha="left", y=1.1, weight=500)
-    axN2.axhline(1e-8, color="white", lw=5, alpha=0.8)
-    axN2.axhline(1e-8, color="C3")
+    axN2.set_ylabel("$\\bf{\Delta E}$ [Ha]", rotation=0, ha="left", y=1.05, weight=500)
+    axN2.axhline(1e-8, color="white", lw=5, alpha=0.8, zorder=10, xmin=0.04)
+    axN2.axhline(1e-8, color="C3", zorder=11, xmin=0.01)
     axN2.annotate(
         "SCF",
         (0, 1e-8),
@@ -146,8 +146,8 @@ def make_figure(ext):
         va="top",
         weight=300,
     )
-    axN2.axhline(0.04336 / 27.211, color="white", lw=5, alpha=0.8)
-    axN2.axhline(0.04336 / 27.211, color="C4")
+    axN2.axhline(0.04336 / 27.211, color="white", lw=5, alpha=0.8, zorder=10, xmin=0.04)
+    axN2.axhline(0.04336 / 27.211, color="C4", zorder=11, xmin=0.01)
     axN2.text(
         40,
         0.04336 / 27.211,

@@ -21,17 +21,31 @@ def fix_axes(ax):
     ax.spines["top"].set_visible(False)
     for loc, spine in ax.spines.items():
         if loc in ["left", "bottom"]:
-            spine.set_position(("outward", 10))
+            spine.set_position(("outward", 0))
 
 
-plt.rcParams.update({"font.size": 22})
-cutoff = 11
-style = {
-    "markersize": 10,
-    "markeredgewidth": 2,
-    "markeredgecolor": "white",
-}
-plt.rcParams["font.family"] = "Linux Biolinum O"
+DARKGREY = "#6d6d6d"
+
+
+def placeletter(ax, letter):
+    ax.text(
+        1.0,
+        1.05,
+        "(" + letter.lower() + ")",
+        transform=ax.transAxes,
+        # fontsize=26,
+        fontweight=800,
+        va="bottom",
+        ha="right",
+        color=DARKGREY,
+    )
+
+
+plt.style.use("figures/paper.mplstyle")
+plt.rcParams["font.sans-serif"] = "Fira Sans Extra Condensed"
+plt.rcParams["mathtext.fontset"] = "custom"
+plt.rcParams["mathtext.it"] = "Fira Sans Extra Condensed:italic"
+plt.rcParams["mathtext.bf"] = "Fira Sans Extra Condensed:italic:medium"
 
 f = plt.figure(constrained_layout=True, figsize=(20, 7))
 
@@ -57,6 +71,7 @@ ylims = (1e-13, 1e-18, 1e-4, 1e-4)
 xmax = (3, 3, 5, 5, 12, 12)
 ymax = (18, 18, 70, 70, 15, 15)
 
+NAMES = {"energy": "E", "dm": "\\rho", "moenergy": "\\epsilon_i"}
 aligns = []
 for j in range(6):
     for i in range(3):
@@ -66,11 +81,20 @@ for j in range(6):
             for label in "energy dm moenergy".split():
                 df = pd.read_csv(f"{filenames[j]}.{label}.csv")
                 s = df.query("method == 'pade'").groupby("order").mean().reset_index()
-                ax.semilogy(s.order, s.error)
+                ax.semilogy(s.order, s.error, label=f"${NAMES[label]}$")
             ax.set_ylim(ylims[j // 2], 1e1)
             ax.axhline(0.04336 / 27.211, color="C4")
             ax.axhline(1e-8, color="C3")
             ax.get_xaxis().set_ticks([])
+            if j == 0:
+                ax.legend(
+                    frameon=False,
+                    handlelength=0.7,
+                    ncol=3,
+                    columnspacing=0.3,
+                    loc="lower left",
+                    borderaxespad=0.1,
+                )
         if i == 1:
             c = convergence.Calculation(filenames[j])
             for key in c.get_keys_by_group("moenergy"):
@@ -87,11 +111,14 @@ for j in range(6):
                 )
                 ts = pd.concat((a, b))
                 ax.plot(ts, color="C0", lw=0.5)
-                ax.set_ylim(-2, 2)
+                ax.set_ylim(-2.5, 2)
+                ax.set_yticks([-2.5, 0, 2])
                 ax.scatter(
                     ts.reset_index().order.max(), float(c.get_target(key)), color="grey"
                 )
-            ax.set_xlabel("Order")
+            ax.set_xlabel(
+                "Order", loc="right", weight=500, va="bottom", labelpad=-30, zorder=100
+            )
             ax.set_xticks((0, 10, 20, 30, 40, 50))
         if (j % 2) == 1:
             ax.get_yaxis().set_ticks([])
@@ -116,14 +143,21 @@ for j in range(6):
                 ax.text(-2, 10, "35", ha="left", color="C2", va="top")
             ax.set_xlim(min(target[0]), xmax[j])
             ax.set_ylim(0, ymax[j])
-            ax.set_xlabel("Position [a$_0$]")
+            ax.set_xlabel(
+                "$\\bf{d}$ [a$_0$]",
+                weight=500,
+                loc="right",
+                va="bottom",
+                labelpad=-30,
+                zorder=1000,
+            )
         if j == 0:
             ylabels = [
                 "|Error|\n[a.u.]",
                 "MO Energy\n[Ha]",
                 "Electron density\n[arb. units]",
             ]
-            ax.set_ylabel(ylabels[i])
+            ax.set_ylabel(ylabels[i], weight=500)
             aligns.append(ax)
 
         fix_axes(ax)
@@ -225,4 +259,9 @@ for filename in filenames:
 # import pickle
 # with open("overview-profiles.pkl", "wb") as fh:
 #     pickle.dump(profiles,fh)
+# %%
+import pickle
+
+with open("overview-profiles.pkl", "rb") as fh:
+    profiels = pickle.load(fh)
 # %%

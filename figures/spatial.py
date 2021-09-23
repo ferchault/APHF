@@ -93,20 +93,34 @@ def fix_axes(ax):
     ax.spines["top"].set_visible(False)
     for loc, spine in ax.spines.items():
         if loc in ["left", "bottom"]:
-            spine.set_position(("outward", 10))
+            spine.set_position(("outward", 0))
 
 
-plt.rcParams.update({"font.size": 22})
-cutoff = 11
-style = {
-    "markersize": 10,
-    "markeredgewidth": 2,
-    "markeredgecolor": "white",
-}
-plt.rcParams["font.family"] = "Linux Biolinum O"
+DARKGREY = "#6d6d6d"
+
+
+def placeletter(ax, letter):
+    ax.text(
+        1.0,
+        1.05,
+        "(" + letter.lower() + ")",
+        transform=ax.transAxes,
+        # fontsize=26,
+        fontweight=800,
+        va="bottom",
+        ha="right",
+        color=DARKGREY,
+    )
+
+
+plt.style.use("figures/paper.mplstyle")
+plt.rcParams["font.sans-serif"] = "Fira Sans Extra Condensed"
+plt.rcParams["mathtext.fontset"] = "custom"
+plt.rcParams["mathtext.it"] = "Fira Sans Extra Condensed:italic"
+plt.rcParams["mathtext.bf"] = "Fira Sans Extra Condensed:italic:medium"
 
 f, axs = plt.subplots(2, 2, figsize=(8, 8), sharex=True, sharey=True)
-
+plt.subplots_adjust(hspace=0.4)
 xs = np.linspace(-0.1, 0.4, 500)
 rows = []
 titles = {
@@ -116,9 +130,11 @@ titles = {
     "def2TZVP": "def2-TZVP",
 }
 print("closest distances at order")
+letters = "ABCD"
 for bidx, basis in enumerate("sto3g 6-31G def2SVP def2TZVP ".split()):
     X, Y = bidx // 2, bidx % 2
     ax = axs[X, Y]
+    placeletter(ax, letters[bidx])
     ax.set_title(titles[basis])
     coeffs = get_coefficients(basis)
     for maxo in range(5):
@@ -139,12 +155,27 @@ for bidx, basis in enumerate("sto3g 6-31G def2SVP def2TZVP ".split()):
     ax.axvline(1.2, color="lightgrey")
     # ax.legend()
     ax.set_ylim(-1.14, -1.1)
-    if Y == 0:
-        ax.set_ylabel("Energy [Ha]")
-    if X == 1:
-        ax.set_xlabel("Distance [$a_0$]")
+    if bidx in (0, 2):
+        labelpad = -40
+    else:
+        labelpad = 0
+    ax.set_ylabel(
+        "$\\bf{E}$ [Ha]", rotation=0, ha="left", y=1.05, weight=500, labelpad=labelpad
+    )
+    if bidx in (2, 3):
+        labelpad = -30
+    else:
+        labelpad = 0
+    ax.set_xlabel(
+        "$\\bf{d}$ [$\\bf{a_0}$]",
+        loc="right",
+        weight=500,
+        va="bottom",
+        labelpad=labelpad,
+    )
     if X == 0 and Y == 0:
         ax.legend(frameon=False, ncol=2, columnspacing=0.8, handlelength=1)
     fix_axes(ax)
-plt.savefig("figures/spatial.pdf", bbox_inches="tight")
+
+# plt.savefig("figures/spatial.pdf", bbox_inches="tight")
 # %%
